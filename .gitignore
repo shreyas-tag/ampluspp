@@ -1,0 +1,10 @@
+node_modules
+.env
+.DS_Store
+be/node_modules
+be/.env
+be/src/uploads/*
+!be/src/uploads/.gitkeep
+fe/node_modules
+fe/.env
+fe/dist

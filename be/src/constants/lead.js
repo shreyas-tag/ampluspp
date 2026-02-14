@@ -1,0 +1,15 @@
+const LEAD_STATUS = {
+  NEW: 'NEW',
+  CONTACTED: 'CONTACTED',
+  FOLLOW_UP: 'FOLLOW_UP',
+  CONVERTED: 'CONVERTED',
+  LOST: 'LOST'
+};
+
+const LEAD_TEMPERATURE = {
+  HOT: 'HOT',
+  WARM: 'WARM',
+  COLD: 'COLD'
+};
+
+module.exports = { LEAD_STATUS, LEAD_TEMPERATURE };
