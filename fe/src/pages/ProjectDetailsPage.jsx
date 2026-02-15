@@ -85,6 +85,37 @@ const stageStateLabel = (status) => {
   return 'No Work';
 };
 
+const taskStatusTagClass = (status) => {
+  if (status === 'COMPLETED') return 'status-completed';
+  if (status === 'IN_PROGRESS') return 'status-in-progress';
+  if (status === 'SKIPPED') return 'status-skipped';
+  return 'status-pending';
+};
+
+const milestoneStatusTagClass = (status) => {
+  if (status === 'DONE') return 'status-completed';
+  if (status === 'IN_PROGRESS') return 'status-in-progress';
+  if (status === 'SKIPPED') return 'status-skipped';
+  return 'status-pending';
+};
+
+const taskPriorityTagClass = (priority) => {
+  if (priority === 'HIGH') return 'priority-high';
+  if (priority === 'LOW') return 'priority-low';
+  return 'priority-medium';
+};
+
+const timelineToneClass = (type) => {
+  if (String(type).includes('COMPLETED')) return 'tone-success';
+  if (String(type).includes('STARTED') || String(type).includes('IN_PROGRESS')) return 'tone-warning';
+  if (String(type).includes('ATTACHMENT') || String(type).includes('COMMENT')) return 'tone-info';
+  if (String(type).includes('CREATED')) return 'tone-created';
+  if (String(type).includes('UPDATED')) return 'tone-updated';
+  return 'tone-neutral';
+};
+
+const TIMELINE_PAGE_SIZE = 10;
+
 function ProjectDetailsPage() {
   const { id } = useParams();
   const { lastEvent } = useSocketEvents();
@@ -120,6 +151,7 @@ function ProjectDetailsPage() {
   const [completeTarget, setCompleteTarget] = useState({ milestoneId: null, taskId: null, taskName: '' });
   const [taskDetailsTarget, setTaskDetailsTarget] = useState({ milestoneId: null, taskId: null });
   const [showTaskDetailsModal, setShowTaskDetailsModal] = useState(false);
+  const [timelinePage, setTimelinePage] = useState(1);
 
   const [commentForms, setCommentForms] = useState({});
 
@@ -216,6 +248,16 @@ function ProjectDetailsPage() {
     [project]
   );
 
+  const timelinePageCount = useMemo(
+    () => Math.max(1, Math.ceil(timelineEntries.length / TIMELINE_PAGE_SIZE)),
+    [timelineEntries.length]
+  );
+
+  const pagedTimelineEntries = useMemo(() => {
+    const start = (timelinePage - 1) * TIMELINE_PAGE_SIZE;
+    return timelineEntries.slice(start, start + TIMELINE_PAGE_SIZE);
+  }, [timelineEntries, timelinePage]);
+
   const selectedTaskContext = useMemo(() => {
     if (!project || !showTaskDetailsModal || !taskDetailsTarget.milestoneId || !taskDetailsTarget.taskId) return null;
     const milestone = (project.milestones || []).find((item) => String(item._id) === String(taskDetailsTarget.milestoneId));
@@ -242,6 +284,14 @@ function ProjectDetailsPage() {
     setTaskAssigneeDraft(currentAssigneeId ? String(currentAssigneeId) : '');
     setTaskDeadlineDraft(toDateInput(selectedTaskContext.task?.deadline));
   }, [selectedTaskContext]);
+
+  useEffect(() => {
+    setTimelinePage(1);
+  }, [id]);
+
+  useEffect(() => {
+    setTimelinePage((prev) => Math.min(prev, timelinePageCount));
+  }, [timelinePageCount]);
 
   const updateProjectStage = async () => {
     try {
@@ -476,7 +526,7 @@ function ProjectDetailsPage() {
           <div className="section-head">
             <h3>{milestone.name}</h3>
             <div className="toolbar-row">
-              <span className="tag neutral">{milestone.status}</span>
+              <span className={`tag ${milestoneStatusTagClass(milestone.status)}`}>{milestone.status}</span>
               {isAdmin ? (
                 <>
                   <select value={milestone.stage || selectedStage} onChange={(e) => updateMilestone(milestone._id, { stage: e.target.value })}>
@@ -521,28 +571,41 @@ function ProjectDetailsPage() {
           {milestone.description ? <p className="muted-text">{milestone.description}</p> : null}
 
           <div className="task-list-shell">
-            {(milestone.tasks || []).map((task) => (
-              <button key={task._id} type="button" className="task-row" onClick={() => openTaskDetails(milestone._id, task._id)}>
-                <div className="task-row-main">
-                  <div className="task-row-title">{task.name}</div>
-                  <p className="task-row-desc">{task.description || 'No description provided yet.'}</p>
-                  <div className="task-row-meta">
-                    <span className="tag neutral">{task.priority}</span>
-                    <span className="tag neutral">{task.status}</span>
-                    <span className="tag neutral">Assignee: {task?.assignee?.name || 'Unassigned'}</span>
-                    {task.requiresAttachment ? <span className="tag neutral">Doc Required</span> : null}
-                    <span className="tag neutral">Due: {formatAbsoluteDate(task.deadline)}</span>
+            {(milestone.tasks || []).map((task) => {
+              const isClosed = ['COMPLETED', 'SKIPPED'].includes(task.status);
+              const isOverdue =
+                Boolean(task.deadline) && !isClosed && new Date(task.deadline).getTime() < Date.now();
+
+              return (
+                <button
+                  key={task._id}
+                  type="button"
+                  className={`task-row status-${String(task.status || 'PENDING').toLowerCase().replace(/_/g, '-')}`}
+                  onClick={() => openTaskDetails(milestone._id, task._id)}
+                >
+                  <div className="task-row-main">
+                    <div className="task-row-title">{task.name}</div>
+                    <p className="task-row-desc">{task.description || 'No description provided yet.'}</p>
+                    <div className="task-row-meta">
+                      <span className={`tag ${taskPriorityTagClass(task.priority)}`}>{task.priority}</span>
+                      <span className={`tag ${taskStatusTagClass(task.status)}`}>{task.status}</span>
+                      <span className={`tag ${task?.assignee?.name ? 'assignee-assigned' : 'assignee-unassigned'}`}>
+                        Assignee: {task?.assignee?.name || 'Unassigned'}
+                      </span>
+                      {task.requiresAttachment ? <span className="tag info-tag">Doc Required</span> : null}
+                      <span className={`tag ${isOverdue ? 'due-overdue' : 'due-normal'}`}>Due: {formatAbsoluteDate(task.deadline)}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="task-row-end">
-                  <span className="table-count">{(task.comments || []).length} comments</span>
-                  <span className="table-count">{(task.attachments || []).length} docs</span>
-                  <span className="inline-link">
-                    Open <ChevronRight size={12} />
-                  </span>
-                </div>
-              </button>
-            ))}
+                  <div className="task-row-end">
+                    <span className="table-count">{(task.comments || []).length} comments</span>
+                    <span className="table-count">{(task.attachments || []).length} docs</span>
+                    <span className="inline-link">
+                      Open <ChevronRight size={12} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </article>
       ))}
@@ -550,10 +613,31 @@ function ProjectDetailsPage() {
       <article className="card">
         <div className="section-head">
           <h3>Project Timeline</h3>
+          <div className="toolbar-row">
+            <span className="table-count">
+              Page {timelinePage} / {timelinePageCount}
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary btn-compact"
+              disabled={timelinePage <= 1}
+              onClick={() => setTimelinePage((prev) => Math.max(1, prev - 1))}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-compact"
+              disabled={timelinePage >= timelinePageCount}
+              onClick={() => setTimelinePage((prev) => Math.min(timelinePageCount, prev + 1))}
+            >
+              Next
+            </button>
+          </div>
         </div>
         <ul className="timeline-list">
-          {timelineEntries.map((entry, idx) => (
-            <li key={idx}>
+          {pagedTimelineEntries.map((entry, idx) => (
+            <li key={`${entry.type}-${entry.at || idx}-${idx}`} className={`timeline-entry ${timelineToneClass(entry.type)}`}>
               <div>
                 <strong>{entry.type}</strong>
                 <p>{entry.message}</p>

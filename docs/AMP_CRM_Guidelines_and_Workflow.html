@@ -1,0 +1,292 @@
+<h1 id="amplus-crm---complete-user-guide-and-operational-sop">Amplus CRM
+- Complete User Guide and Operational SOP</h1>
+<h2 id="purpose-and-scope">1. Purpose and Scope</h2>
+<p>This document is the operational source of truth for using Amplus
+CRM.</p>
+<p>It covers the complete lifecycle: Lead -&gt; Client -&gt; Project
+-&gt; Milestones -&gt; Tasks -&gt; Documents -&gt; Completion</p>
+<p>This guide is written for teams who have never used the system before
+and need clear day-to-day usage instructions.</p>
+<h2 id="system-modules-in-current-build">2. System Modules in Current
+Build</h2>
+<ul>
+<li>Authentication and role-based access (<code>ADMIN</code>,
+<code>USER</code>)</li>
+<li>User management (admin only)</li>
+<li>Lead management (manual entry and WordPress webhook intake)</li>
+<li>Lead communication (notes, calls, status, follow-up)</li>
+<li>Lead temperature and bucketing (<code>HOT</code>, <code>WARM</code>,
+<code>COLD</code>, <code>CONVERTED</code>)</li>
+<li>Client management</li>
+<li>Lead conversion to client + project</li>
+<li>Project stages, milestones, and tasks</li>
+<li>Task comments and PDF attachments</li>
+<li>Automated task/milestone/stage/project progression</li>
+<li>Dashboard and pending-work views</li>
+<li>Notifications and live activity panel</li>
+<li>Admin system settings (including webhook controls)</li>
+<li>Audit logging</li>
+</ul>
+<h2 id="roles-and-permissions">3. Roles and Permissions</h2>
+<h3 id="admin">ADMIN</h3>
+<ul>
+<li>Full access to all modules and records</li>
+<li>Can manage users and settings</li>
+<li>Can create/edit project structure (milestones/tasks)</li>
+<li>Can assign/reassign task owners and deadlines</li>
+<li>Always sees Live Activity panel</li>
+<li>Can enable/disable Live Activity visibility for non-admin users</li>
+<li>Can configure WordPress webhook key and activation state</li>
+</ul>
+<h3 id="user">USER</h3>
+<ul>
+<li>Can work on lead and project records</li>
+<li>Can see assigned project execution scope</li>
+<li>Can add notes/calls and perform assigned task actions</li>
+<li>Cannot change admin-only settings or user management</li>
+<li>Live Activity visibility depends on admin setting</li>
+</ul>
+<h2 id="first-time-admin-setup">4. First-Time Admin Setup</h2>
+<ol type="1">
+<li>Log in with admin credentials.</li>
+<li>Go to <code>Settings</code> -&gt; <code>System Config</code>.</li>
+<li>Configure <code>Live Activity for Users</code> as required.</li>
+<li>Configure <code>WordPress Contact Form Webhook</code>:</li>
+</ol>
+<ul>
+<li>Enter secure webhook key.</li>
+<li>Keep webhook enabled if website intake should be active.</li>
+<li>Save config.</li>
+</ul>
+<ol start="5" type="1">
+<li>Create required users in user management.</li>
+<li>Verify categories/schemes are present in DB.</li>
+</ol>
+<h2 id="lead-intake-standards-manual-website">5. Lead Intake Standards
+(Manual + Website)</h2>
+<h2 id="required-lead-identity-fields">Required lead identity
+fields</h2>
+<ul>
+<li>Name of Promoter / Authorized Person</li>
+<li>Name of Enterprise / Business</li>
+<li>Phone Number</li>
+</ul>
+<h2 id="recommended-primary-contact-fields">Recommended primary contact
+fields</h2>
+<ul>
+<li>Contact Person (if different)</li>
+<li>Email</li>
+</ul>
+<h2 id="location-fields">Location fields</h2>
+<ul>
+<li>Address</li>
+<li>Taluka / Tehsil</li>
+<li>District</li>
+<li>City</li>
+<li>State</li>
+</ul>
+<h2 id="business-profile-fields">Business profile fields</h2>
+<ul>
+<li>Business Constitution Type</li>
+<li>Project Land Detail</li>
+<li>Gender of Partners / Directors</li>
+<li>Caste of Promoter / Partners / Entrepreneurs</li>
+<li>Manufacturing or Processing Details</li>
+</ul>
+<h2 id="financial-fields">Financial fields</h2>
+<ul>
+<li>Investment in Building / Construction</li>
+<li>Investment in Land</li>
+<li>Investment in Plant &amp; Machinery</li>
+<li>Total Investment</li>
+<li>Bank Loan (If Any)</li>
+<li>Bank Loan (%)</li>
+<li>Own Contribution / Margin (%)</li>
+</ul>
+<h2 id="project-context-fields">Project context fields</h2>
+<ul>
+<li>Project Type</li>
+<li>Availed Subsidy Previously</li>
+<li>Specific Ask / Highlight about Project</li>
+</ul>
+<h2 id="operational-fields">Operational fields</h2>
+<ul>
+<li>Source</li>
+<li>Requirement Type</li>
+<li>Next Follow-up</li>
+</ul>
+<p>All of these fields are now supported in: - Manual lead creation form
+- Website webhook ingestion mapping - Lead details display - Lead
+details edit modal</p>
+<h2 id="wordpress-webhook-configuration-and-usage">6. WordPress Webhook
+Configuration and Usage</h2>
+<h2 id="endpoint-and-security">Endpoint and security</h2>
+<ul>
+<li>Endpoint: <code>/api/leads/webform</code></li>
+<li>Header: <code>x-webhook-key</code></li>
+<li>Request method: <code>POST</code></li>
+<li>Content type: <code>application/json</code></li>
+</ul>
+<h2 id="configuration-behavior">Configuration behavior</h2>
+<ul>
+<li><code>Configured</code> means system has a webhook key (DB or env
+fallback).</li>
+<li><code>Active</code> means key exists and webhook is enabled by admin
+setting.</li>
+<li>If disabled, website lead creation is blocked by design.</li>
+</ul>
+<h2 id="where-to-configure">Where to configure</h2>
+<ul>
+<li>Admin path: <code>Settings</code> -&gt; <code>System Config</code>
+-&gt; <code>WordPress Contact Form Webhook</code></li>
+<li>You can:</li>
+<li>Set/replace webhook key</li>
+<li>Enable/disable webhook intake</li>
+<li>Clear webhook key</li>
+<li>Copy endpoint/header instructions</li>
+<li>View <code>Last webhook received</code> status</li>
+</ul>
+<h2 id="website-payload-mapping">Website payload mapping</h2>
+<p>The webhook accepts both CRM-style keys and label-style keys from
+form plugins.</p>
+<p>Core accepted keys include: - <code>companyName</code> /
+<code>nameOfTheEnterpriseBusiness</code> - <code>contactPerson</code> /
+promoter aliases - <code>mobileNumber</code> / <code>phoneNo</code> -
+<code>email</code> / <code>emailId</code></p>
+<p>Extended keys are mapped to full lead profile fields (location,
+business type, investment, finance mix, subsidy history, specific
+ask).</p>
+<h2 id="end-to-end-workflow">7. End-to-End Workflow</h2>
+<h2 id="stage-1-lead-creation">Stage 1: Lead Creation</h2>
+<ol type="1">
+<li>Create lead manually or receive from website webhook.</li>
+<li>Validate contact and business profile fields.</li>
+<li>Confirm lead appears in lead list.</li>
+</ol>
+<h2 id="stage-2-lead-qualification">Stage 2: Lead Qualification</h2>
+<ol type="1">
+<li>Update status (<code>NEW</code>, <code>CONTACTED</code>,
+<code>FOLLOW_UP</code>, <code>LOST</code>, <code>CONVERTED</code>).</li>
+<li>Add notes after each meaningful interaction.</li>
+<li>Log calls with date/time, duration, and summary.</li>
+<li>Set next follow-up.</li>
+</ol>
+<h2 id="stage-3-lead-buckets-and-priority">Stage 3: Lead Buckets and
+Priority</h2>
+<p>Lead buckets are automatic by recency: - <code>HOT</code>: updated in
+last 2 days - <code>WARM</code>: no update for 3-4 days -
+<code>COLD</code>: no update for 5+ days - <code>CONVERTED</code>: moved
+to converted bucket</p>
+<h2 id="stage-4-lead-conversion">Stage 4: Lead Conversion</h2>
+<ol type="1">
+<li>Use <code>Convert to Client</code> on qualified lead.</li>
+<li>System creates:</li>
+</ol>
+<ul>
+<li>Client record</li>
+<li>Linked project</li>
+<li>Default milestones/tasks</li>
+</ul>
+<ol start="3" type="1">
+<li>Lead is marked converted and shown in converted tab.</li>
+</ol>
+<h2 id="stage-5-project-execution">Stage 5: Project Execution</h2>
+<ol type="1">
+<li>Open project stage tabs.</li>
+<li>Work milestone-by-milestone, task-by-task.</li>
+<li>Task details include guidance, comments, documents, and audit
+timeline.</li>
+</ol>
+<h2 id="stage-6-task-completion-rules">Stage 6: Task Completion
+Rules</h2>
+<ul>
+<li>Task auto-moves to <code>IN_PROGRESS</code> when work starts
+(comment/upload).</li>
+<li>Task completion can be blocked when required documents are
+missing.</li>
+<li>Milestone status is auto-derived from task statuses.</li>
+<li>Stage status reflects aggregate milestone progress.</li>
+<li>Project completion is automatic when all required work is
+closed.</li>
+</ul>
+<h2 id="stage-7-monitoring-and-closure">Stage 7: Monitoring and
+Closure</h2>
+<ol type="1">
+<li>Use dashboard pending-work and KPI views.</li>
+<li>Validate timelines and audit trail completeness.</li>
+<li>Confirm all required documents and closure conditions are met.</li>
+</ol>
+<h2 id="lead-details-screen---how-to-use">8. Lead Details Screen - How
+to Use</h2>
+<p>From lead details page, users can: - Update status and follow-up -
+Add note - Log call - Edit full intake details (all profile fields) -
+Convert lead to client/project (when ready)</p>
+<p>The <code>Lead Intake Details</code> panel is the structured single
+view of all business, location, finance, and project ask fields.</p>
+<h2 id="task-and-document-collaboration-rules">9. Task and Document
+Collaboration Rules</h2>
+<ul>
+<li>Comments should always contain clear action context.</li>
+<li>PDF upload should be used for proof documents.</li>
+<li>Actor and timestamp are preserved for comments, calls, and timeline
+events.</li>
+<li>Admin/user permissions are enforced for task execution actions.</li>
+</ul>
+<h2 id="notifications-and-live-activity">10. Notifications and Live
+Activity</h2>
+<ul>
+<li>Browser notifications are supported.</li>
+<li>Live Activity is real-time and role-aware.</li>
+<li>Admin always sees live activity.</li>
+<li>User visibility is controlled by admin setting.</li>
+</ul>
+<h2 id="security-and-audit-controls">11. Security and Audit
+Controls</h2>
+<ul>
+<li>JWT-protected APIs</li>
+<li>Role-based authorization</li>
+<li>Assignment-aware task execution permissions</li>
+<li>Protected file access routes</li>
+<li>Webhook key validation for website intake</li>
+<li>Settings and lifecycle audit events captured in audit logs</li>
+</ul>
+<h2 id="daily-operations-checklist">12. Daily Operations Checklist</h2>
+<h2 id="admin-daily-checklist">Admin daily checklist</h2>
+<ol type="1">
+<li>Review dashboard and pending work.</li>
+<li>Check overdue/unassigned tasks.</li>
+<li>Validate stage progression bottlenecks.</li>
+<li>Check webhook status (<code>Configured</code>, <code>Active</code>,
+<code>Last received</code>).</li>
+<li>Review critical audit entries.</li>
+</ol>
+<h2 id="user-daily-checklist">User daily checklist</h2>
+<ol type="1">
+<li>Review assigned work queue.</li>
+<li>Update tasks with comments and documents.</li>
+<li>Keep lead follow-ups updated with next action.</li>
+<li>Log calls with complete summaries.</li>
+</ol>
+<h2 id="uat-handover-validation-checklist">13. UAT / Handover Validation
+Checklist</h2>
+<ol type="1">
+<li>Verify login and role behavior.</li>
+<li>Verify manual lead create with full intake fields.</li>
+<li>Verify lead details edit for all intake fields.</li>
+<li>Verify WordPress webhook lead creation with configured key.</li>
+<li>Verify webhook disable behavior blocks intake correctly.</li>
+<li>Verify notes/calls/timeline updates.</li>
+<li>Verify lead bucket behavior (<code>HOT</code>, <code>WARM</code>,
+<code>COLD</code>, <code>CONVERTED</code>).</li>
+<li>Verify conversion to client + project.</li>
+<li>Verify task assignment, comments, and PDF attachment flow.</li>
+<li>Verify automation of task/milestone/stage/project status.</li>
+<li>Verify dashboard KPIs and pending queue.</li>
+<li>Verify audit logs for major actions.</li>
+</ol>
+<h2 id="document-control">14. Document Control</h2>
+<p>This guide aligns to implemented code in: -
+<code>/Users/shreyas/FinallyTogether/amp/ampluspp/be</code> -
+<code>/Users/shreyas/FinallyTogether/amp/ampluspp/fe</code></p>
+<p>Update this file whenever process, fields, automation rules, or
+access controls change.</p>

@@ -6,6 +6,8 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatSmartDateTime } from '../utils/dateFormat';
+import LeadProfileFields from '../components/LeadProfileFields';
+import { buildLeadPayload, leadFormInitialValues, mapLeadToForm } from '../constants/leadForm';
 
 const actorName = (actor) => {
   if (!actor) return 'Unknown user';
@@ -22,12 +24,14 @@ function LeadDetailsPage() {
   const [error, setError] = useState('');
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showConvertConfirm, setShowConvertConfirm] = useState(false);
 
   const [updateForm, setUpdateForm] = useState({ status: '', nextFollowUpAt: '' });
+  const [detailForm, setDetailForm] = useState(leadFormInitialValues);
   const [note, setNote] = useState('');
   const [callData, setCallData] = useState({ callAt: '', durationMinutes: 15, summary: '' });
   const [convertForm, setConvertForm] = useState({
@@ -46,6 +50,7 @@ function LeadDetailsPage() {
         status: data.lead.status || '',
         nextFollowUpAt: data.lead.nextFollowUpAt ? new Date(data.lead.nextFollowUpAt).toISOString().slice(0, 16) : ''
       });
+      setDetailForm(mapLeadToForm(data.lead));
       setCatalog(catalogRes.data);
       setError('');
     } catch (err) {
@@ -70,6 +75,18 @@ function LeadDetailsPage() {
         nextFollowUpAt: updateForm.nextFollowUpAt || null
       });
       setShowUpdateModal(false);
+      await fetchLead();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    }
+  };
+
+  const updateLeadDetails = async (event) => {
+    event.preventDefault();
+    try {
+      const payload = buildLeadPayload(detailForm);
+      await api.patch(`/leads/${id}`, payload);
+      setShowEditDetailsModal(false);
       await fetchLead();
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -135,6 +152,9 @@ function LeadDetailsPage() {
         <button className="btn btn-secondary" onClick={() => setShowUpdateModal(true)}>
           Update Status
         </button>
+        <button className="btn btn-secondary" onClick={() => setShowEditDetailsModal(true)}>
+          Edit Lead Details
+        </button>
         <button className="btn btn-secondary" onClick={() => setShowNoteModal(true)}>
           Add Note
         </button>
@@ -149,6 +169,88 @@ function LeadDetailsPage() {
           <span className="tag cold">Converted</span>
         )}
       </div>
+
+      <article className="card">
+        <div className="section-head">
+          <h3>Lead Intake Details</h3>
+        </div>
+        <div className="split-grid">
+          <div className="info-tile">
+            <small>Promoter / Authorized Person</small>
+            <strong>{lead.promoterName || lead.contactPerson || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Enterprise / Business</small>
+            <strong>{lead.companyName || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Business Constitution</small>
+            <strong>{lead.businessConstitutionType || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Project Type</small>
+            <strong>{lead.projectType || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Location</small>
+            <strong>{[lead.address, lead.taluka, lead.district, lead.state].filter(Boolean).join(', ') || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Project Land Detail</small>
+            <strong>{lead.projectLandDetail || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Gender of Partners / Directors</small>
+            <strong>{lead.partnersDirectorsGender || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Caste Category</small>
+            <strong>{lead.promoterCasteCategory || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Investment - Building / Construction</small>
+            <strong>{lead.investmentBuildingConstruction ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Investment - Land</small>
+            <strong>{lead.investmentLand ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Investment - Plant & Machinery</small>
+            <strong>{lead.investmentPlantMachinery ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Total Investment</small>
+            <strong>{lead.totalInvestment ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Bank Loan (If Any)</small>
+            <strong>{lead.bankLoanIfAny || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Bank Loan (%)</small>
+            <strong>{lead.financeBankLoanPercent ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Own Contribution / Margin (%)</small>
+            <strong>{lead.financeOwnContributionPercent ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Availed Subsidy Previously</small>
+            <strong>{lead.availedSubsidyPreviously || '-'}</strong>
+          </div>
+        </div>
+        <div className="split-grid">
+          <div className="info-tile">
+            <small>Manufacturing or Processing of</small>
+            <strong>{lead.manufacturingDetails || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Specific Ask / Highlight</small>
+            <strong>{lead.projectSpecificAsk || '-'}</strong>
+          </div>
+        </div>
+      </article>
 
       <div className="three-col-grid">
         <article className="card compact">
@@ -283,6 +385,20 @@ function LeadDetailsPage() {
             </button>
             <button type="submit" className="btn btn-primary">
               Save Update
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={showEditDetailsModal} title="Edit Lead Details" onClose={() => setShowEditDetailsModal(false)}>
+        <form className="grid-form" onSubmit={updateLeadDetails}>
+          <LeadProfileFields form={detailForm} setForm={setDetailForm} showOperationalFields />
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowEditDetailsModal(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Save Details
             </button>
           </div>
         </form>

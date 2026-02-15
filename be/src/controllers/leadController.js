@@ -13,6 +13,106 @@ const { getLeadTemperature } = require('../utils/leadTemperature');
 const { broadcastEvent } = require('../utils/realtime');
 const { recalcProjectStats } = require('../utils/projectStats');
 const { logAudit } = require('../utils/auditLog');
+const { getOrCreateSystemSettings, resolveWordpressWebhookConfig } = require('../utils/systemSettings');
+
+const NUMERIC_LEAD_FIELDS = new Set([
+  'investmentBuildingConstruction',
+  'investmentLand',
+  'investmentPlantMachinery',
+  'totalInvestment',
+  'financeBankLoanPercent',
+  'financeOwnContributionPercent'
+]);
+
+const EDITABLE_LEAD_FIELDS = [
+  'companyName',
+  'contactPerson',
+  'promoterName',
+  'mobileNumber',
+  'email',
+  'address',
+  'taluka',
+  'district',
+  'city',
+  'state',
+  'businessConstitutionType',
+  'industryType',
+  'projectLandDetail',
+  'partnersDirectorsGender',
+  'promoterCasteCategory',
+  'manufacturingDetails',
+  'investmentBuildingConstruction',
+  'investmentLand',
+  'investmentPlantMachinery',
+  'totalInvestment',
+  'bankLoanIfAny',
+  'financeBankLoanPercent',
+  'financeOwnContributionPercent',
+  'projectType',
+  'requirementType',
+  'availedSubsidyPreviously',
+  'projectSpecificAsk',
+  'source',
+  'status',
+  'assignedTo',
+  'nextFollowUpAt'
+];
+
+const normalizeKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const normalizeString = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const str = String(value).trim();
+  return str ? str : null;
+};
+
+const normalizeNumber = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const parsed = Number(String(value).replace(/,/g, '').replace(/%/g, '').trim());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeLeadField = (field, value) => {
+  if (NUMERIC_LEAD_FIELDS.has(field)) return normalizeNumber(value);
+  if (field === 'nextFollowUpAt') return value || null;
+  return normalizeString(value);
+};
+
+const extractLeadAttributes = (payload) => {
+  const attrs = {};
+  EDITABLE_LEAD_FIELDS.forEach((field) => {
+    if (payload[field] !== undefined) {
+      attrs[field] = normalizeLeadField(field, payload[field]);
+    }
+  });
+  return attrs;
+};
+
+const createPayloadLookup = (payload) => {
+  const lookup = {};
+  Object.entries(payload || {}).forEach(([key, value]) => {
+    lookup[normalizeKey(key)] = value;
+  });
+  return lookup;
+};
+
+const pickFromPayload = (payload, lookup, aliases) => {
+  for (const alias of aliases) {
+    if (payload?.[alias] !== undefined && payload?.[alias] !== null && String(payload[alias]).trim() !== '') {
+      return payload[alias];
+    }
+  }
+  for (const alias of aliases) {
+    const value = lookup[normalizeKey(alias)];
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return value;
+    }
+  }
+  return undefined;
+};
 
 const computeFirstResponse = (lead, actorId, now, nextStatus) => {
   const responseStatuses = [LEAD_STATUS.CONTACTED, LEAD_STATUS.FOLLOW_UP, LEAD_STATUS.CONVERTED];
@@ -137,7 +237,8 @@ const getLeadById = async (req, res, next) => {
 const createLead = async (req, res, next) => {
   try {
     const payload = req.body;
-    if (!payload.companyName || !payload.contactPerson || !payload.mobileNumber) {
+    const contactPerson = payload.contactPerson || payload.promoterName;
+    if (!payload.companyName || !contactPerson || !payload.mobileNumber) {
       const err = new Error('Company name, contact person and mobile number are required');
       err.statusCode = StatusCodes.BAD_REQUEST;
       throw err;
@@ -148,17 +249,11 @@ const createLead = async (req, res, next) => {
 
     const lead = await Lead.create({
       leadId,
-      companyName: payload.companyName,
-      contactPerson: payload.contactPerson,
-      mobileNumber: payload.mobileNumber,
-      email: payload.email,
-      city: payload.city,
-      state: payload.state,
-      industryType: payload.industryType,
-      requirementType: payload.requirementType,
+      ...extractLeadAttributes({
+        ...payload,
+        contactPerson
+      }),
       source: payload.source || 'MANUAL',
-      assignedTo: payload.assignedTo || null,
-      nextFollowUpAt: payload.nextFollowUpAt || null,
       createdBy: req.user._id,
       enquiryReceivedAt: now,
       lastStatusChangedAt: now,
@@ -208,20 +303,51 @@ const createLead = async (req, res, next) => {
 
 const createLeadFromWebsite = async (req, res, next) => {
   try {
+    const settings = await getOrCreateSystemSettings();
+    const webhook = resolveWordpressWebhookConfig(settings);
     const key = req.headers['x-webhook-key'];
-    const expected = process.env.WORDPRESS_WEBHOOK_KEY || '';
-    if (!expected) {
-      const err = new Error('WordPress webhook key is not configured on server');
+    if (!webhook.configured) {
+      const err = new Error('WordPress webhook key is not configured');
       err.statusCode = StatusCodes.SERVICE_UNAVAILABLE;
       throw err;
     }
-    if (key !== expected) {
+    if (!webhook.isActive) {
+      const err = new Error('WordPress webhook is currently disabled');
+      err.statusCode = StatusCodes.SERVICE_UNAVAILABLE;
+      throw err;
+    }
+    if (key !== webhook.key) {
       const err = new Error('Invalid webhook key');
       err.statusCode = StatusCodes.UNAUTHORIZED;
       throw err;
     }
 
-    const { companyName, contactPerson, mobileNumber, email, city, state, message } = req.body;
+    const lookup = createPayloadLookup(req.body);
+    const promoterName = pickFromPayload(req.body, lookup, [
+      'promoterName',
+      'nameOfPromoter',
+      'nameOfPromoterAuthorizePerson',
+      'nameOfPromoterAuthorizedPerson',
+      'authorizedPersonName',
+      'authorizePersonName',
+      'name'
+    ]);
+    const companyName = pickFromPayload(req.body, lookup, [
+      'companyName',
+      'enterpriseName',
+      'businessName',
+      'nameOfEnterprise',
+      'nameOfBusiness',
+      'nameOfTheEnterpriseBusiness'
+    ]);
+    const contactPerson = pickFromPayload(req.body, lookup, ['contactPerson', 'contactName', 'personName']) || promoterName;
+    const mobileNumber = pickFromPayload(req.body, lookup, ['mobileNumber', 'phoneNo', 'phone', 'phoneNumber', 'mobile', 'phoneNo1']);
+    const email = pickFromPayload(req.body, lookup, ['email', 'emailId']);
+    const city = pickFromPayload(req.body, lookup, ['city']);
+    const district = pickFromPayload(req.body, lookup, ['district']);
+    const state = pickFromPayload(req.body, lookup, ['state']);
+    const inboundMessage = pickFromPayload(req.body, lookup, ['message', 'projectSpecificAsk', 'specificAsk', 'highlight']);
+
     if (!companyName || !contactPerson || !mobileNumber) {
       const err = new Error('companyName, contactPerson and mobileNumber are required');
       err.statusCode = StatusCodes.BAD_REQUEST;
@@ -242,26 +368,59 @@ const createLeadFromWebsite = async (req, res, next) => {
 
     const lead = await Lead.create({
       leadId,
-      companyName,
-      contactPerson,
-      mobileNumber,
-      email,
-      city,
-      state,
+      ...extractLeadAttributes({
+        companyName,
+        contactPerson,
+        promoterName,
+        mobileNumber,
+        email,
+        city,
+        district,
+        state,
+        businessConstitutionType: pickFromPayload(req.body, lookup, ['businessConstitutionType']),
+        address: pickFromPayload(req.body, lookup, ['address', 'locationOfTheProjectAddress']),
+        taluka: pickFromPayload(req.body, lookup, ['taluka', 'talukaTehsil']),
+        projectLandDetail: pickFromPayload(req.body, lookup, ['projectLandDetail']),
+        partnersDirectorsGender: pickFromPayload(req.body, lookup, ['partnersDirectorsGender', 'genderOfPartnersDirectors']),
+        promoterCasteCategory: pickFromPayload(req.body, lookup, ['promoterCasteCategory', 'casteOfPromoterPartnersEntrepreneurs']),
+        manufacturingDetails: pickFromPayload(req.body, lookup, ['manufacturingDetails', 'manufacturingOrProcessingOf']),
+        investmentBuildingConstruction: pickFromPayload(req.body, lookup, ['investmentBuildingConstruction']),
+        investmentLand: pickFromPayload(req.body, lookup, ['investmentLand']),
+        investmentPlantMachinery: pickFromPayload(req.body, lookup, ['investmentPlantMachinery']),
+        totalInvestment: pickFromPayload(req.body, lookup, ['totalInvestment']),
+        bankLoanIfAny: pickFromPayload(req.body, lookup, ['bankLoanIfAny']),
+        financeBankLoanPercent: pickFromPayload(req.body, lookup, [
+          'financeBankLoanPercent',
+          'bankLoanPercent',
+          'bankLoan',
+          'meansOfFinanceBankLoan'
+        ]),
+        financeOwnContributionPercent: pickFromPayload(req.body, lookup, [
+          'financeOwnContributionPercent',
+          'ownContributionMargin',
+          'ownContribution'
+        ]),
+        projectType: pickFromPayload(req.body, lookup, ['projectType', 'typeOfProject']),
+        availedSubsidyPreviously: pickFromPayload(req.body, lookup, [
+          'availedSubsidyPreviously',
+          'whetherAvailedAnySubsidyBenefitUnderAnySchemePreviouslyUnderSameNameOrEntity'
+        ]),
+        projectSpecificAsk: pickFromPayload(req.body, lookup, ['projectSpecificAsk', 'specificAsk', 'highlight', 'message']) || inboundMessage
+      }),
       source: 'WEBSITE',
       createdBy: actorId,
       enquiryReceivedAt: new Date(),
       lastStatusChangedAt: new Date(),
       statusHistory: [{ to: LEAD_STATUS.NEW, at: new Date(), changedBy: actorId }],
       communicationStats: {
-        notesCount: message ? 1 : 0,
+        notesCount: inboundMessage ? 1 : 0,
         callsCount: 0,
         totalCallDurationMinutes: 0
       },
-      notes: message
+      notes: inboundMessage
         ? [
             {
-              note: `Website message: ${message}`,
+              note: `Website message: ${inboundMessage}`,
               createdBy: actorId
             }
           ]
@@ -296,6 +455,13 @@ const createLeadFromWebsite = async (req, res, next) => {
       req
     });
 
+    try {
+      settings.integrations.wordpress.lastReceivedAt = new Date();
+      await settings.save();
+    } catch (_err) {
+      // Do not fail lead creation if heartbeat update fails.
+    }
+
     res.status(StatusCodes.CREATED).json({ lead });
   } catch (err) {
     next(err);
@@ -318,24 +484,9 @@ const updateLead = async (req, res, next) => {
     const previousStatus = lead.status;
     if (!lead.statusHistory) lead.statusHistory = [];
 
-    const updatableFields = [
-      'companyName',
-      'contactPerson',
-      'mobileNumber',
-      'email',
-      'city',
-      'state',
-      'industryType',
-      'requirementType',
-      'source',
-      'status',
-      'assignedTo',
-      'nextFollowUpAt'
-    ];
-
-    updatableFields.forEach((field) => {
+    EDITABLE_LEAD_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
-        lead[field] = req.body[field];
+        lead[field] = normalizeLeadField(field, req.body[field]);
       }
     });
     const now = new Date();

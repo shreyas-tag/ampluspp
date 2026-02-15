@@ -1,0 +1,104 @@
+Module,Submodule,Tasks,UI,FE,BE,Integration
+Platform & Architecture,Environment Setup,Ability to create production-ready FE and BE project structure,,6,4,2
+,,Ability to manage environment variables for FE and BE securely,,4,4,2
+,Database Bootstrap,Ability to connect MongoDB Atlas with startup failure handling,,2,6,2
+,Data Standards,"Ability to generate unique IDs for leads, clients, and projects",,2,6,2
+,API Standards,Ability to enforce centralized error handling and HTTP response consistency,,2,6,3
+,Catalog Foundation,Ability to seed static categories and scheme data into MongoDB,,1,6,3
+,Runtime Baseline,Ability to standardize run/build commands and port configuration,,2,2,1
+Authentication & Access Control,Authentication,Ability to log in with secure credential validation and JWT session,,8,8,4
+,,Ability to hydrate authenticated user session across page refresh,,4,4,2
+,,Ability to log out securely and invalidate local auth context,,3,2,1
+,Password Security,Ability to change password using current-password verification,,6,6,3
+,Role Access,Ability to restrict admin-only actions by role middleware,,3,6,2
+,Task Authorization,Ability to allow task updates only for assignee or admin,,4,8,4
+,Project Visibility,Ability to limit non-admin project visibility to assigned work,,4,8,3
+User Administration,User Listing,"Ability to view user table with role, status, and search filters",,8,4,2
+,User Creation,Ability to create new users with role and secure password rules,,8,6,4
+,User Lifecycle,Ability to activate or deactivate users with confirmation dialogs,,6,6,3
+,Admin Safety,Ability to prevent disabling or demoting the last active admin,,2,6,4
+,,Ability to prevent self-disable on current logged-in admin account,,2,4,2
+,Assignment Support,Ability to provide assignable active users for task assignment,,2,4,3
+,Audit Trail,Ability to capture user management actions in system activity logs,,2,5,4
+Lead Management,Lead Intake,Ability to create leads manually with core company and contact fields,,8,6,4
+,,Ability to receive submitted WordPress contact forms via secured webhook,,2,6,6
+,Lead Listing,"Ability to list leads with search, source, and status filters",,10,8,4
+,Lead Buckets,Ability to show HOT/WARM/COLD/CONVERTED tabs with quick filtering,,8,6,4
+,Lead Timeline,Ability to add lead notes with author and timestamp entries,,6,6,5
+,Call Logging,"Ability to log call date, time, duration, and discussion summary",,6,6,5
+,Follow-up Rules,Ability to auto-calculate lead heat based on update recency rules,,2,8,4
+,Lead SLAs,Ability to capture first-response and follow-up metrics for reporting,,2,6,5
+,Lead Search,"Ability to search by company, contact person, and mobile",,4,4,2
+Lead Conversion & Client Onboarding,Conversion Flow,Ability to convert a lead into a client from lead detail page,,6,8,6
+,,Ability to auto-create project immediately after successful conversion,,2,6,8
+,Data Mapping,"Ability to map category, scheme, department, and values during conversion",,4,6,6
+,Lead State,Ability to move converted lead to CONVERTED tab automatically,,4,4,4
+,Audit & Traceability,"Ability to log conversion event with lead, client, and project references",,2,6,6
+,Workflow Safety,Ability to keep conversion workflow validated against duplicate operations,,1,4,5
+Client Management,Client Onboarding,Ability to create client with organization and contact profile,,8,6,4
+,,Ability to auto-create project from direct client creation flow,,3,5,6
+,Client Listing,Ability to list and search clients with key relationship fields,,8,6,3
+,Data Linkage,Ability to preserve source lead reference for converted clients,,2,4,4
+,Client Context,Ability to show linked project count and active stage snapshot,,4,5,3
+,Timeline,Ability to capture client creation and linkage events for reporting trail,,2,5,4
+Project Management Core,Project Listing,Ability to view project table with filters by stage and assignment,,8,6,4
+,Project Workspace,Ability to open project detail with stage tabs and progress summary,,12,10,6
+,Stage Management,Ability for admin to change project stage with confirmation dialog,,6,6,4
+,Stage Indicators,Ability to color-code stage tabs by DONE/IN_PROGRESS/PENDING,,6,4,3
+,Execution Metrics,"Ability to show milestone, task, and completion counters",,4,4,4
+,Project Timeline,Ability to render project timeline events with actor and smart date,,6,6,5
+,Access Scope,Ability to show all projects for admin and assigned-only projects for users,,3,6,4
+Milestones & Tasks,Milestone Management,Ability to create milestones under selected project stages,,6,6,5
+,,Ability to update milestone due date and stage mapping,,4,4,4
+,Task Management,"Ability to create task with title, description, priority, and due date",,8,7,5
+,Task Assignment,Ability to assign task owner and update assignee when required,,4,5,5
+,Task Execution Rules,Ability to auto-mark task IN_PROGRESS on first comment or upload,,2,6,4
+,Task Completion Rules,Ability to block completion when required document is missing,,2,6,4
+,Status Automation,Ability to auto-complete milestone once all child tasks are closed,,2,7,5
+,Task UI,"Ability to display color-coded capsules for priority, status, assignee, and due",,8,5,3
+,Pending Queue,Ability to show role-aware pending task queue on dashboard,,6,5,4
+Task Collaboration & Documents,Task Detail View,Ability to open task in detailed modal with execution context,,8,5,3
+,Comments,Ability to add comments and display commenter with timestamp,,6,6,5
+,,Ability to render ordered comment history for multi-user collaboration,,4,4,4
+,Document Upload,Ability to upload PDF documents per task execution step,,6,6,6
+,Document Access,Ability to download attachments through authorized secure route,,4,5,6
+,Permission Guard,Ability to enforce assignee/admin permission on comments and uploads,,2,6,5
+,Timeline Integration,Ability to write collaboration events into project timeline stream,,2,5,5
+Automation & Workflow Engine,Status Sync,Ability to recalculate milestone status using child task statuses,,1,7,6
+,Stage Progression,Ability to auto-advance project stage after stage completion,,1,7,6
+,Project Completion,Ability to auto-close project when all milestones are completed,,1,6,5
+,Activity Stats,"Ability to auto-recompute task, milestone, comment, and document counters",,1,6,5
+,Audit Events,Ability to write system timeline events for automated state changes,,1,6,6
+,Queue Sync,Ability to refresh pending work queues based on assignment and status changes,,2,6,5
+Notifications & Live Activity,Realtime Infrastructure,Ability to initialize and maintain socket-based event channel,,2,7,6
+,Event Security,Ability to authenticate socket connection using JWT identity,,1,5,5
+,Notification Delivery,Ability to send user-scoped live events for workflow updates,,4,6,6
+,Live Activity Panel,Ability to show collapsible right-side live activity panel,,8,5,3
+,Visibility Controls,Ability to toggle live activity for users while admin sees always,,6,5,5
+,Browser Alerts,Ability to trigger browser notifications for key updates,,4,4,4
+,Notification Inbox,Ability to list notifications and mark as read by recipient,,6,5,5
+Dashboard & Reporting,KPI Dashboard,"Ability to show lead, client, project, and pending task counters",,8,6,4
+,,Ability to show lead conversion rate and average first response time,,6,6,5
+,Execution Insights,Ability to show stage distribution and completion progress,,6,5,4
+,Pending Work,Ability to display pending task queue with assignee and deadline,,6,5,4
+,Report Metrics,Ability to capture communication statistics for management reporting,,2,6,6
+,Audit Readiness,Ability to persist event trail fields required for audit and future reports,,1,6,6
+Settings & Catalog Configuration,Admin Settings,Ability to manage live activity configuration for user visibility,,6,5,5
+,Admin Security,Ability to update admin password from secure settings form,,6,5,4
+,Config Storage,Ability to persist and read global app settings from MongoDB,,2,5,6
+,Catalog Seed,Ability to maintain static categories and schemes in database records,,2,6,6
+,Catalog APIs,Ability to fetch category and scheme master data in FE forms,,3,5,4
+,Access Security,Ability to restrict settings and catalog controls to admin role,,1,4,4
+UI UX System & Frontend Quality,Layout System,"Ability to implement consistent sidebar, topbar, and dashboard shell",,12,4,2
+,Modal UX,Ability to keep create/edit actions in modals with confirmations,,10,4,2
+,Table UX,Ability to align search/filter controls above tables for maximum data space,,10,4,2
+,Badge System,Ability to apply status-based color capsules across tables and task lists,,8,4,2
+,Date UX,"Ability to display smart datetime rules (Today, Yesterday, weekday, full date)",,8,4,2
+,Sidebar Behavior,Ability to keep sidebar fixed with user details/signout pinned at bottom,,8,3,1
+,Timeline UX,Ability to paginate timeline records and maintain responsive scroll behavior,,8,4,2
+"QA, Security Hardening & Release Readiness",API Validation,Ability to validate request payloads on all write endpoints,,6,8,8
+,Security Controls,Ability to enforce webhook key and auth guard reliability checks,,5,6,6
+,Workflow Testing,Ability to test lead-to-client-to-project lifecycle end-to-end,,6,8,8
+,Permission Testing,Ability to verify role and assignment controls across modules,,5,6,6
+,Upload Testing,Ability to test document upload/download and completion guards,,5,6,6
+,Release Readiness,Ability to complete final smoke checks and go-live readiness list,,4,5,5
