@@ -67,6 +67,7 @@ function ClientsPage() {
                 <th>Contact Person</th>
                 <th>Consultant</th>
                 <th>Projects</th>
+                <th>Invoices</th>
               </tr>
             </thead>
             <tbody>
@@ -91,11 +92,16 @@ function ClientsPage() {
                           </div>
                         ))}
                   </td>
+                  <td>
+                    <Link className="inline-link" to={`/invoices?clientId=${client._id}`}>
+                      Open Invoices
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {!loading && clients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="empty-cell">
+                  <td colSpan={7} className="empty-cell">
                     No clients found.
                   </td>
                 </tr>

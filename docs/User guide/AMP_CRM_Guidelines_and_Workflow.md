@@ -12,12 +12,16 @@ This guide is written for teams who have never used the system before and need c
 - Authentication and role-based access (`ADMIN`, `USER`)
 - User management (admin only)
 - Lead management (manual entry and WordPress webhook intake)
+- Lead creation wizard (step-based intake flow)
 - Lead communication (notes, calls, status, follow-up)
 - Lead temperature and bucketing (`HOT`, `WARM`, `COLD`, `CONVERTED`)
 - Client management
 - Lead conversion to client + project
 - Project stages, milestones, and tasks
 - Task comments and PDF attachments
+- Invoice management (client/project-wise)
+- Invoice details page and in-app PDF viewer page
+- Invoice payment tracking and invoice PDF export
 - Automated task/milestone/stage/project progression
 - Dashboard and pending-work views
 - Notifications and live activity panel
@@ -33,6 +37,7 @@ This guide is written for teams who have never used the system before and need c
 - Always sees Live Activity panel
 - Can enable/disable Live Activity visibility for non-admin users
 - Can configure WordPress webhook key and activation state
+- Can create/update invoices, record offline payments, and update invoice status
 
 ### USER
 - Can work on lead and project records
@@ -138,7 +143,12 @@ Extended keys are mapped to full lead profile fields (location, business type, i
 ## 7. End-to-End Workflow
 
 ## Stage 1: Lead Creation
-1. Create lead manually or receive from website webhook.
+1. Create lead manually through the stepper flow or receive from website webhook.
+2. Lead create steps:
+- `Basic Details`
+- `Location & Profile`
+- `Financial Scope`
+- `Operations`
 2. Validate contact and business profile fields.
 3. Confirm lead appears in lead list.
 
@@ -147,6 +157,7 @@ Extended keys are mapped to full lead profile fields (location, business type, i
 2. Add notes after each meaningful interaction.
 3. Log calls with date/time, duration, and summary.
 4. Set next follow-up.
+5. Add follow-up reports (`1`, `2`, `3`) as needed; multiple entries per report number are supported.
 
 ## Stage 3: Lead Buckets and Priority
 Lead buckets are automatic by recency:
@@ -176,15 +187,36 @@ Lead buckets are automatic by recency:
 - Project completion is automatic when all required work is closed.
 
 ## Stage 7: Monitoring and Closure
-1. Use dashboard pending-work and KPI views.
+1. Use role-specific dashboards:
+- Admin: executive analytics and system-wide pending work
+- User: "My Work" queue and assigned execution view
 2. Validate timelines and audit trail completeness.
 3. Confirm all required documents and closure conditions are met.
+
+## Stage 8: Invoice and Payment Tracking
+1. Create invoice against client and optionally project.
+2. Add line items, tax, and discount details.
+3. Set invoice due date and issue status.
+4. Record offline payments (amount, method, paid date, reference, note).
+5. Update invoice status (`DRAFT`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`).
+6. Open dedicated invoice details page for full invoice operations.
+7. Use `View PDF` to open dedicated in-app PDF page.
+8. Use PDF controls (zoom, rotate, reset, download) as required.
+
+## 7A. Invoice Navigation Behavior
+- From invoice list `Open`: user goes to invoice details page.
+- From invoice list `View PDF`: user goes to invoice PDF page.
+- From invoice details `View PDF`: user goes to invoice PDF page.
+- PDF page `Back` returns to previous context:
+- If opened from list -> back to list
+- If opened from invoice details -> back to invoice details
 
 ## 8. Lead Details Screen - How to Use
 From lead details page, users can:
 - Update status and follow-up
 - Add note
 - Log call
+- Add structured follow-up reports
 - Edit full intake details (all profile fields)
 - Convert lead to client/project (when ready)
 
@@ -208,6 +240,7 @@ The `Lead Intake Details` panel is the structured single view of all business, l
 - Assignment-aware task execution permissions
 - Protected file access routes
 - Webhook key validation for website intake
+- Invoice lifecycle and payment actions captured in audit logs
 - Settings and lifecycle audit events captured in audit logs
 
 ## 12. Daily Operations Checklist
@@ -237,7 +270,12 @@ The `Lead Intake Details` panel is the structured single view of all business, l
 9. Verify task assignment, comments, and PDF attachment flow.
 10. Verify automation of task/milestone/stage/project status.
 11. Verify dashboard KPIs and pending queue.
-12. Verify audit logs for major actions.
+12. Verify role-split dashboard behavior (admin analytics vs user workboard).
+13. Verify invoice open flow to dedicated details page.
+14. Verify invoice PDF opens on dedicated page and back navigation returns to source page.
+15. Verify invoice PDF controls (zoom/rotate/reset/download).
+16. Verify invoice create/update, status transitions, payment entry, and PDF download.
+17. Verify audit logs for major actions.
 
 ## 14. Document Control
 This guide aligns to implemented code in:

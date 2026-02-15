@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import { normalizeModuleAccess } from '../constants/modules';
 
 const AuthContext = createContext(null);
 
@@ -29,12 +30,22 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, password }) => {
     const { data } = await api.post('/auth/login', { email, password });
-    persistAuth(data.token, data.user);
-    return data.user;
+    const nextUser = data?.user ? { ...data.user, moduleAccess: normalizeModuleAccess(data.user.moduleAccess) } : null;
+    persistAuth(data.token, nextUser);
+    return nextUser;
   };
 
   const logout = () => {
     persistAuth(null, null);
+  };
+
+  const refreshUser = async () => {
+    if (!token) return null;
+    const { data } = await api.get('/auth/me');
+    const nextUser = data?.user ? { ...data.user, moduleAccess: normalizeModuleAccess(data.user.moduleAccess) } : null;
+    setUser(nextUser);
+    localStorage.setItem('amp_user', JSON.stringify(nextUser));
+    return nextUser;
   };
 
   useEffect(() => {
@@ -45,9 +56,7 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const { data } = await api.get('/auth/me');
-        setUser(data.user);
-        localStorage.setItem('amp_user', JSON.stringify(data.user));
+        await refreshUser();
       } catch (_error) {
         persistAuth(null, null);
       } finally {
@@ -65,6 +74,9 @@ export function AuthProvider({ children }) {
       loading,
       login,
       logout,
+      refreshUser,
+      moduleAccess: normalizeModuleAccess(user?.moduleAccess),
+      hasModuleAccess: (moduleKey) => normalizeModuleAccess(user?.moduleAccess).includes(moduleKey),
       isAuthenticated: Boolean(token && user),
       isAdmin: user?.role === 'ADMIN'
     }),

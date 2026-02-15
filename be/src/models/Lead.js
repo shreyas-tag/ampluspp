@@ -32,6 +32,16 @@ const callSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const followUpReportSchema = new mongoose.Schema(
+  {
+    reportNo: { type: Number, enum: [1, 2, 3], required: true },
+    remark: { type: String, required: true, trim: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    createdAt: { type: Date, default: Date.now }
+  },
+  { _id: true }
+);
+
 const statusHistorySchema = new mongoose.Schema(
   {
     from: { type: String, enum: Object.values(LEAD_STATUS) },
@@ -71,14 +81,54 @@ const leadSchema = new mongoose.Schema(
     projectType: { type: String, trim: true },
     availedSubsidyPreviously: { type: String, trim: true },
     projectSpecificAsk: { type: String, trim: true },
+    inquiryFor: {
+      type: String,
+      enum: ['SUBSIDY', 'LICENSES_COMPLIANCE', 'INDUSTRIAL_LAND_INFRASTRUCTURE', 'LAND', 'FUNDING', 'COMPLIANCE'],
+      default: 'SUBSIDY'
+    },
+    expectedServiceValue: { type: Number, min: 0 },
+    associatePartnerName: { type: String, trim: true },
+    customerProgressStatus: {
+      type: String,
+      enum: ['IN_PROCESS', 'PENDING_FROM_CUSTOMER', 'WON', 'LOST'],
+      default: 'IN_PROCESS'
+    },
+    callToActionDetailsSharedAt: { type: Date },
+    inquiryFormForwardedAt: { type: Date },
+    milestone1InfoWithPaymentAt: { type: Date },
+    milestone1InfoWithoutPaymentAt: { type: Date },
+    milestone1ConsultationScheduledAt: { type: Date },
+    milestone2ConsultationCompletedAt: { type: Date },
+    milestone2SubsidySummaryForwardedAt: { type: Date },
+    milestone2BusinessProposalSharedAt: { type: Date },
+    milestone2DiscussionInProgressAt: { type: Date },
+    milestone3MandateSignedAt: { type: Date },
+    milestone3ProformaInvoiceRaisedAt: { type: Date },
+    milestone3AdvanceReceivedAt: { type: Date },
+    milestone3AdvanceReceivedAmount: { type: Number, min: 0 },
+    milestone3FinalInvoiceDoneAt: { type: Date },
+    approxProjectValue: { type: Number, min: 0 },
+    approxServiceValue: { type: Number, min: 0 },
     requirementType: {
       type: String,
-      enum: ['SUBSIDY', 'LAND', 'FUNDING', 'COMPLIANCE'],
+      enum: ['SUBSIDY', 'LAND', 'FUNDING', 'COMPLIANCE', 'LICENSES_COMPLIANCE', 'INDUSTRIAL_LAND_INFRASTRUCTURE'],
       default: 'SUBSIDY'
     },
     source: {
       type: String,
-      enum: ['WEBSITE', 'EXHIBITION', 'REFERRAL', 'WHATSAPP', 'COLD_CALL', 'MANUAL'],
+      enum: [
+        'WEBSITE',
+        'EXHIBITION',
+        'REFERRAL',
+        'WHATSAPP',
+        'COLD_CALL',
+        'MANUAL',
+        'ONLINE_SOCIAL_MEDIA',
+        'COLD_CALLING_WHATSAPP',
+        'REFERENCE_EXISTING_CLIENT',
+        'ASSOCIATES_B2B_PARTNERS',
+        'EXHIBITION_NETWORKING_EVENTS'
+      ],
       default: 'MANUAL'
     },
     status: {
@@ -106,6 +156,7 @@ const leadSchema = new mongoose.Schema(
     statusHistory: [statusHistorySchema],
     notes: [noteSchema],
     calls: [callSchema],
+    followUpReports: [followUpReportSchema],
     timeline: [timelineSchema]
   },
   { timestamps: true }

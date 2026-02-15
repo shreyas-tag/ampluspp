@@ -13,12 +13,13 @@ const {
   uploadTaskAttachment,
   downloadTaskAttachment
 } = require('../controllers/projectController');
-const { requireAuth, adminOnly } = require('../middlewares/auth');
+const { requireAuth, adminOnly, requireModuleAccess } = require('../middlewares/auth');
 const { uploadPdf } = require('../middlewares/upload');
+const { APP_MODULES } = require('../constants/modules');
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireModuleAccess(APP_MODULES.PROJECTS));
 router.get('/', listProjects);
 router.get('/:id', getProjectById);
 router.post('/', adminOnly, createProject);

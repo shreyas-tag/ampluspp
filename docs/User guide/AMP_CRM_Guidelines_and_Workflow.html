@@ -1,3 +1,177 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>AMP_CRM_Guidelines_and_Workflow</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
 <h1 id="amplus-crm---complete-user-guide-and-operational-sop">Amplus CRM
 - Complete User Guide and Operational SOP</h1>
 <h2 id="purpose-and-scope">1. Purpose and Scope</h2>
@@ -14,6 +188,7 @@ Build</h2>
 <code>USER</code>)</li>
 <li>User management (admin only)</li>
 <li>Lead management (manual entry and WordPress webhook intake)</li>
+<li>Lead creation wizard (step-based intake flow)</li>
 <li>Lead communication (notes, calls, status, follow-up)</li>
 <li>Lead temperature and bucketing (<code>HOT</code>, <code>WARM</code>,
 <code>COLD</code>, <code>CONVERTED</code>)</li>
@@ -21,6 +196,9 @@ Build</h2>
 <li>Lead conversion to client + project</li>
 <li>Project stages, milestones, and tasks</li>
 <li>Task comments and PDF attachments</li>
+<li>Invoice management (client/project-wise)</li>
+<li>Invoice details page and in-app PDF viewer page</li>
+<li>Invoice payment tracking and invoice PDF export</li>
 <li>Automated task/milestone/stage/project progression</li>
 <li>Dashboard and pending-work views</li>
 <li>Notifications and live activity panel</li>
@@ -37,6 +215,8 @@ Build</h2>
 <li>Always sees Live Activity panel</li>
 <li>Can enable/disable Live Activity visibility for non-admin users</li>
 <li>Can configure WordPress webhook key and activation state</li>
+<li>Can create/update invoices, record offline payments, and update
+invoice status</li>
 </ul>
 <h3 id="user">USER</h3>
 <ul>
@@ -159,7 +339,17 @@ ask).</p>
 <h2 id="end-to-end-workflow">7. End-to-End Workflow</h2>
 <h2 id="stage-1-lead-creation">Stage 1: Lead Creation</h2>
 <ol type="1">
-<li>Create lead manually or receive from website webhook.</li>
+<li>Create lead manually through the stepper flow or receive from
+website webhook.</li>
+<li>Lead create steps:</li>
+</ol>
+<ul>
+<li><code>Basic Details</code></li>
+<li><code>Location &amp; Profile</code></li>
+<li><code>Financial Scope</code></li>
+<li><code>Operations</code></li>
+</ul>
+<ol start="2" type="1">
 <li>Validate contact and business profile fields.</li>
 <li>Confirm lead appears in lead list.</li>
 </ol>
@@ -170,6 +360,9 @@ ask).</p>
 <li>Add notes after each meaningful interaction.</li>
 <li>Log calls with date/time, duration, and summary.</li>
 <li>Set next follow-up.</li>
+<li>Add follow-up reports (<code>1</code>, <code>2</code>,
+<code>3</code>) as needed; multiple entries per report number are
+supported.</li>
 </ol>
 <h2 id="stage-3-lead-buckets-and-priority">Stage 3: Lead Buckets and
 Priority</h2>
@@ -212,15 +405,51 @@ closed.</li>
 <h2 id="stage-7-monitoring-and-closure">Stage 7: Monitoring and
 Closure</h2>
 <ol type="1">
-<li>Use dashboard pending-work and KPI views.</li>
+<li>Use role-specific dashboards:</li>
+</ol>
+<ul>
+<li>Admin: executive analytics and system-wide pending work</li>
+<li>User: “My Work” queue and assigned execution view</li>
+</ul>
+<ol start="2" type="1">
 <li>Validate timelines and audit trail completeness.</li>
 <li>Confirm all required documents and closure conditions are met.</li>
 </ol>
+<h2 id="stage-8-invoice-and-payment-tracking">Stage 8: Invoice and
+Payment Tracking</h2>
+<ol type="1">
+<li>Create invoice against client and optionally project.</li>
+<li>Add line items, tax, and discount details.</li>
+<li>Set invoice due date and issue status.</li>
+<li>Record offline payments (amount, method, paid date, reference,
+note).</li>
+<li>Update invoice status (<code>DRAFT</code>, <code>ISSUED</code>,
+<code>PARTIALLY_PAID</code>, <code>PAID</code>, <code>OVERDUE</code>,
+<code>CANCELLED</code>).</li>
+<li>Open dedicated invoice details page for full invoice
+operations.</li>
+<li>Use <code>View PDF</code> to open dedicated in-app PDF page.</li>
+<li>Use PDF controls (zoom, rotate, reset, download) as required.</li>
+</ol>
+<h2 id="a.-invoice-navigation-behavior">7A. Invoice Navigation
+Behavior</h2>
+<ul>
+<li>From invoice list <code>Open</code>: user goes to invoice details
+page.</li>
+<li>From invoice list <code>View PDF</code>: user goes to invoice PDF
+page.</li>
+<li>From invoice details <code>View PDF</code>: user goes to invoice PDF
+page.</li>
+<li>PDF page <code>Back</code> returns to previous context:</li>
+<li>If opened from list -&gt; back to list</li>
+<li>If opened from invoice details -&gt; back to invoice details</li>
+</ul>
 <h2 id="lead-details-screen---how-to-use">8. Lead Details Screen - How
 to Use</h2>
 <p>From lead details page, users can: - Update status and follow-up -
-Add note - Log call - Edit full intake details (all profile fields) -
-Convert lead to client/project (when ready)</p>
+Add note - Log call - Add structured follow-up reports - Edit full
+intake details (all profile fields) - Convert lead to client/project
+(when ready)</p>
 <p>The <code>Lead Intake Details</code> panel is the structured single
 view of all business, location, finance, and project ask fields.</p>
 <h2 id="task-and-document-collaboration-rules">9. Task and Document
@@ -248,6 +477,7 @@ Controls</h2>
 <li>Assignment-aware task execution permissions</li>
 <li>Protected file access routes</li>
 <li>Webhook key validation for website intake</li>
+<li>Invoice lifecycle and payment actions captured in audit logs</li>
 <li>Settings and lifecycle audit events captured in audit logs</li>
 </ul>
 <h2 id="daily-operations-checklist">12. Daily Operations Checklist</h2>
@@ -282,6 +512,14 @@ Checklist</h2>
 <li>Verify task assignment, comments, and PDF attachment flow.</li>
 <li>Verify automation of task/milestone/stage/project status.</li>
 <li>Verify dashboard KPIs and pending queue.</li>
+<li>Verify role-split dashboard behavior (admin analytics vs user
+workboard).</li>
+<li>Verify invoice open flow to dedicated details page.</li>
+<li>Verify invoice PDF opens on dedicated page and back navigation
+returns to source page.</li>
+<li>Verify invoice PDF controls (zoom/rotate/reset/download).</li>
+<li>Verify invoice create/update, status transitions, payment entry, and
+PDF download.</li>
 <li>Verify audit logs for major actions.</li>
 </ol>
 <h2 id="document-control">14. Document Control</h2>
@@ -290,3 +528,5 @@ Checklist</h2>
 <code>/Users/shreyas/FinallyTogether/amp/ampluspp/fe</code></p>
 <p>Update this file whenever process, fields, automation rules, or
 access controls change.</p>
+</body>
+</html>

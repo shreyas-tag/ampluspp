@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ChevronRight, FileText, MessageSquareMore } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api, { apiErrorMessage } from '../api/client';
 import { useSocketEvents } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +24,7 @@ const STAGES = [
 const VISIBLE_TIMELINE_TYPES = new Set([
   'PROJECT_CREATED',
   'PROJECT_UPDATED',
+  'PROJECT_PROCESS_TRACKING_UPDATED',
   'STAGE_AUTO_ADVANCED',
   'PROJECT_AUTO_COMPLETED',
   'MILESTONE_CREATED',
@@ -116,6 +117,42 @@ const timelineToneClass = (type) => {
 
 const TIMELINE_PAGE_SIZE = 10;
 
+const PROCESS_TRACKING_FIELDS = [
+  { key: 'callToActionSharedAt', label: 'Call To Action Shared Date', type: 'date' },
+  { key: 'inquiryFormForwardedAt', label: 'Forward Detail Inquiry Form Date', type: 'date' },
+  { key: 'milestone1InfoWithPaymentAt', label: 'Milestone 1: Info Received With Payment', type: 'date' },
+  { key: 'milestone1InfoWithoutPaymentAt', label: 'Milestone 1: Info Received Without Payment', type: 'date' },
+  { key: 'milestone1ConsultationScheduledAt', label: 'Milestone 1: Consultation Call Scheduled', type: 'date' },
+  { key: 'milestone2ConsultationCompletedAt', label: 'Milestone 2: Initial Consultation Completed', type: 'date' },
+  { key: 'milestone2SubsidySummaryForwardedAt', label: 'Milestone 2: Subsidy Summary Forwarded', type: 'date' },
+  { key: 'milestone2BusinessProposalSharedAt', label: 'Milestone 2: Business Proposal Shared', type: 'date' },
+  { key: 'milestone2DiscussionInProgressAt', label: 'Milestone 2: Discussion In Progress', type: 'date' },
+  { key: 'milestone3MandateSignedAt', label: 'Milestone 3: Mandate Signed Date', type: 'date' },
+  { key: 'milestone3ProformaInvoiceRaisedAt', label: 'Milestone 3: Proforma Invoice Raised Date', type: 'date' },
+  { key: 'milestone3AdvanceReceivedAt', label: 'Milestone 3: Advance Received Date', type: 'date' },
+  { key: 'milestone3AdvanceReceivedAmount', label: 'Milestone 3: Advance Received Amount', type: 'number' },
+  { key: 'milestone3FinalInvoiceDoneAt', label: 'Milestone 3: Final Invoice Done Date', type: 'date' },
+  { key: 'approxProjectValue', label: 'Approx Project Value', type: 'number' },
+  { key: 'approxServiceValue', label: 'Approx Service Value', type: 'number' }
+];
+
+const buildProcessTrackingForm = (processTracking = {}) =>
+  PROCESS_TRACKING_FIELDS.reduce((acc, field) => {
+    if (field.type === 'date') {
+      acc[field.key] = toDateInput(processTracking?.[field.key]);
+      return acc;
+    }
+    const value = processTracking?.[field.key];
+    acc[field.key] = value === undefined || value === null ? '' : String(value);
+    return acc;
+  }, {});
+
+const processTrackingDisplay = (value, type) => {
+  if (value === undefined || value === null || value === '') return '-';
+  if (type === 'date') return formatAbsoluteDate(value);
+  return Number(value).toLocaleString('en-IN');
+};
+
 function ProjectDetailsPage() {
   const { id } = useParams();
   const { lastEvent } = useSocketEvents();
@@ -151,6 +188,9 @@ function ProjectDetailsPage() {
   const [completeTarget, setCompleteTarget] = useState({ milestoneId: null, taskId: null, taskName: '' });
   const [taskDetailsTarget, setTaskDetailsTarget] = useState({ milestoneId: null, taskId: null });
   const [showTaskDetailsModal, setShowTaskDetailsModal] = useState(false);
+  const [showProcessTrackingModal, setShowProcessTrackingModal] = useState(false);
+  const [processTrackingForm, setProcessTrackingForm] = useState(() => buildProcessTrackingForm());
+  const [savingProcessTracking, setSavingProcessTracking] = useState(false);
   const [timelinePage, setTimelinePage] = useState(1);
 
   const [commentForms, setCommentForms] = useState({});
@@ -171,6 +211,7 @@ function ProjectDetailsPage() {
       setMilestoneDueDrafts(
         Object.fromEntries((projectData.milestones || []).map((milestone) => [String(milestone._id), toDateInput(milestone.dueDate)]))
       );
+      setProcessTrackingForm(buildProcessTrackingForm(projectData.processTracking || {}));
       setError('');
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -326,6 +367,35 @@ function ProjectDetailsPage() {
     }
   };
 
+  const saveProcessTracking = async (event) => {
+    event.preventDefault();
+    setSavingProcessTracking(true);
+    try {
+      const payload = PROCESS_TRACKING_FIELDS.reduce((acc, field) => {
+        const raw = processTrackingForm[field.key];
+        if (field.type === 'date') {
+          acc[field.key] = raw || null;
+        } else {
+          if (raw === '' || raw === null || raw === undefined) {
+            acc[field.key] = 0;
+          } else {
+            const parsed = Number(raw);
+            acc[field.key] = Number.isFinite(parsed) ? Math.max(parsed, 0) : 0;
+          }
+        }
+        return acc;
+      }, {});
+
+      await api.patch(`/projects/${id}`, { processTracking: payload });
+      setShowProcessTrackingModal(false);
+      await load();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSavingProcessTracking(false);
+    }
+  };
+
   const openTaskModal = (milestoneId) => {
     if (!isAdmin) return;
     setTaskMilestoneId(milestoneId);
@@ -459,8 +529,14 @@ function ProjectDetailsPage() {
 
       <div className="action-strip">
         <span className="tag neutral">Current: {project.currentStage}</span>
+        <Link className="btn btn-secondary" to={`/invoices?projectId=${project._id}`}>
+          View Invoices
+        </Link>
         {isAdmin ? (
           <>
+            <button className="btn btn-secondary" onClick={() => setShowProcessTrackingModal(true)}>
+              Update Process Tracking
+            </button>
             <button className="btn btn-secondary" onClick={() => setShowStageModal(true)}>
               Change Stage
             </button>
@@ -489,6 +565,24 @@ function ProjectDetailsPage() {
           <p>Completed: {project.activityStats?.completedTaskCount || 0}</p>
         </article>
       </div>
+
+      <article className="card">
+        <div className="section-head">
+          <h3>Project Process Tracking</h3>
+          <span className="table-count">
+            Last updated:{' '}
+            {project.processTracking?.updatedAt ? formatSmartDateTime(project.processTracking.updatedAt) : 'Not updated yet'}
+          </span>
+        </div>
+        <div className="split-grid">
+          {PROCESS_TRACKING_FIELDS.map((field) => (
+            <div className="info-tile" key={field.key}>
+              <small>{field.label}</small>
+              <strong>{processTrackingDisplay(project.processTracking?.[field.key], field.type)}</strong>
+            </div>
+          ))}
+        </div>
+      </article>
 
       <article className="card">
         <div className="section-head">
@@ -613,25 +707,27 @@ function ProjectDetailsPage() {
       <article className="card">
         <div className="section-head">
           <h3>Project Timeline</h3>
-          <div className="toolbar-row">
-            <span className="table-count">
+          <div className="pagination-inline">
+            <button
+              type="button"
+              className="btn btn-secondary btn-compact pagination-btn"
+              disabled={timelinePage <= 1}
+              onClick={() => setTimelinePage((prev) => Math.max(1, prev - 1))}
+              aria-label="Previous page"
+            >
+              {'<<'}
+            </button>
+            <span className="pagination-status">
               Page {timelinePage} / {timelinePageCount}
             </span>
             <button
               type="button"
-              className="btn btn-secondary btn-compact"
-              disabled={timelinePage <= 1}
-              onClick={() => setTimelinePage((prev) => Math.max(1, prev - 1))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-compact"
+              className="btn btn-secondary btn-compact pagination-btn"
               disabled={timelinePage >= timelinePageCount}
               onClick={() => setTimelinePage((prev) => Math.min(timelinePageCount, prev + 1))}
+              aria-label="Next page"
             >
-              Next
+              {'>>'}
             </button>
           </div>
         </div>
@@ -655,6 +751,35 @@ function ProjectDetailsPage() {
           ))}
         </ul>
       </article>
+
+      <Modal
+        isOpen={showProcessTrackingModal}
+        title="Update Project Process Tracking"
+        onClose={() => setShowProcessTrackingModal(false)}
+      >
+        <form className="grid-form" onSubmit={saveProcessTracking}>
+          {PROCESS_TRACKING_FIELDS.map((field) => (
+            <label key={field.key}>
+              {field.label}
+              <input
+                type={field.type === 'date' ? 'date' : 'number'}
+                min={field.type === 'number' ? 0 : undefined}
+                step={field.type === 'number' ? '0.01' : undefined}
+                value={processTrackingForm[field.key] || ''}
+                onChange={(event) => setProcessTrackingForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
+              />
+            </label>
+          ))}
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowProcessTrackingModal(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={savingProcessTracking}>
+              {savingProcessTracking ? 'Saving...' : 'Save Tracking'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       <Modal isOpen={showStageModal} title="Change Project Stage" onClose={() => setShowStageModal(false)}>
         <form className="grid-form" onSubmit={(event) => event.preventDefault()}>

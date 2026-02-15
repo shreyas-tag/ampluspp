@@ -27,6 +27,7 @@ function LeadDetailsPage() {
   const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showConvertConfirm, setShowConvertConfirm] = useState(false);
 
@@ -34,6 +35,7 @@ function LeadDetailsPage() {
   const [detailForm, setDetailForm] = useState(leadFormInitialValues);
   const [note, setNote] = useState('');
   const [callData, setCallData] = useState({ callAt: '', durationMinutes: 15, summary: '' });
+  const [followUpForm, setFollowUpForm] = useState({ reportNo: '1', remark: '' });
   const [convertForm, setConvertForm] = useState({
     categoryId: '',
     schemeId: '',
@@ -122,6 +124,22 @@ function LeadDetailsPage() {
     }
   };
 
+  const addFollowUpReport = async (event) => {
+    event.preventDefault();
+    if (!followUpForm.remark.trim()) return;
+    try {
+      await api.post(`/leads/${id}/follow-ups`, {
+        reportNo: Number(followUpForm.reportNo),
+        remark: followUpForm.remark.trim()
+      });
+      setFollowUpForm({ reportNo: '1', remark: '' });
+      setShowFollowUpModal(false);
+      await fetchLead();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    }
+  };
+
   const confirmConvertLead = async () => {
     try {
       const { data } = await api.post(`/leads/${id}/convert`, convertForm);
@@ -161,6 +179,9 @@ function LeadDetailsPage() {
         <button className="btn btn-secondary" onClick={() => setShowCallModal(true)}>
           Log Call
         </button>
+        <button className="btn btn-secondary" onClick={() => setShowFollowUpModal(true)}>
+          Add Follow-up Report
+        </button>
         {!lead.isConverted ? (
           <button className="btn btn-primary" onClick={() => setShowConvertModal(true)}>
             Convert to Client
@@ -190,6 +211,22 @@ function LeadDetailsPage() {
           <div className="info-tile">
             <small>Project Type</small>
             <strong>{lead.projectType || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Inquiry For</small>
+            <strong>{lead.inquiryFor || lead.requirementType || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Expected Fees / Service Value</small>
+            <strong>{lead.expectedServiceValue ?? '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Customer Progress Status</small>
+            <strong>{lead.customerProgressStatus || '-'}</strong>
+          </div>
+          <div className="info-tile">
+            <small>Associate / B2B Partner</small>
+            <strong>{lead.associatePartnerName || '-'}</strong>
           </div>
           <div className="info-tile">
             <small>Location</small>
@@ -334,6 +371,35 @@ function LeadDetailsPage() {
         </article>
       </div>
 
+      <div className="split-grid">
+        <article className="card">
+          <div className="section-head">
+            <h3>Follow-up Reports</h3>
+            <span className="table-count">{lead.followUpReports?.length || 0}</span>
+          </div>
+          <ul className="event-list">
+            {lead.followUpReports?.length
+              ? lead.followUpReports
+                  .slice()
+                  .reverse()
+                  .map((item) => (
+                    <li key={item._id}>
+                      <p>
+                        <strong>Follow-up Report {item.reportNo}</strong>
+                      </p>
+                      <p>{item.remark}</p>
+                      <div className="record-meta">
+                        <span>By {actorName(item.createdBy)}</span>
+                        <span className="meta-sep">•</span>
+                        <span>{formatSmartDateTime(item.createdAt)}</span>
+                      </div>
+                    </li>
+                  ))
+              : [<li key="none" className="muted-text">No follow-up reports added yet.</li>]}
+          </ul>
+        </article>
+      </div>
+
       <article className="card">
         <div className="section-head">
           <h3>Activity Timeline</h3>
@@ -454,6 +520,36 @@ function LeadDetailsPage() {
             </button>
             <button type="submit" className="btn btn-primary">
               Save Call
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={showFollowUpModal} title="Add Follow-up Report" onClose={() => setShowFollowUpModal(false)}>
+        <form className="grid-form" onSubmit={addFollowUpReport}>
+          <label>
+            Follow-up Report Number
+            <select value={followUpForm.reportNo} onChange={(e) => setFollowUpForm((prev) => ({ ...prev, reportNo: e.target.value }))}>
+              <option value="1">Follow-up Report 1</option>
+              <option value="2">Follow-up Report 2</option>
+              <option value="3">Follow-up Report 3</option>
+            </select>
+          </label>
+          <label className="full-row">
+            Remark
+            <textarea
+              rows={4}
+              value={followUpForm.remark}
+              onChange={(e) => setFollowUpForm((prev) => ({ ...prev, remark: e.target.value }))}
+              required
+            />
+          </label>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowFollowUpModal(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Save Report
             </button>
           </div>
         </form>

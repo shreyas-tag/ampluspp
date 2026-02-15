@@ -82,7 +82,7 @@ function ProjectsPage() {
                 <th>Scheme</th>
                 <th>Stage</th>
                 <th>Target Date</th>
-                <th />
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -97,9 +97,14 @@ function ProjectsPage() {
                   </td>
                   <td>{formatAbsoluteDate(project.targetCompletionDate)}</td>
                   <td>
-                    <Link className="inline-link" to={`/projects/${project._id}`}>
-                      Open
-                    </Link>
+                    <div className="toolbar-row">
+                      <Link className="inline-link" to={`/projects/${project._id}`}>
+                        Open
+                      </Link>
+                      <Link className="inline-link" to={`/invoices?projectId=${project._id}`}>
+                        Invoices
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

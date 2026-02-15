@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Copy, LockKeyhole, SlidersHorizontal, Webhook } from 'lucide-react';
+import { Copy, LockKeyhole, SlidersHorizontal, UserCog, Webhook } from 'lucide-react';
 import api, { apiErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import { formatSmartDateTime } from '../utils/dateFormat';
+import { APP_MODULES, MODULE_LABELS, USER_ASSIGNABLE_MODULES, normalizeModuleAccess } from '../constants/modules';
 
 const initialWebhookMeta = {
   source: 'NONE',
@@ -31,6 +32,10 @@ function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
+  const [accessUsers, setAccessUsers] = useState([]);
+  const [loadingAccess, setLoadingAccess] = useState(false);
+  const [savingAccessUserId, setSavingAccessUserId] = useState('');
+  const [accessMessage, setAccessMessage] = useState('');
   const [error, setError] = useState('');
 
   const webhookEndpoint = useMemo(() => {
@@ -76,6 +81,28 @@ function SettingsPage() {
   useEffect(() => {
     if (isAdmin) loadAdminSettings();
   }, [isAdmin]);
+
+  const loadAccessControl = async () => {
+    setLoadingAccess(true);
+    try {
+      const { data } = await api.get('/users');
+      const users = (data?.users || []).map((user) => ({
+        ...user,
+        moduleAccess: normalizeModuleAccess(user.moduleAccess)
+      }));
+      setAccessUsers(users);
+      setError('');
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setLoadingAccess(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin || activeTab !== 'access') return;
+    loadAccessControl();
+  }, [isAdmin, activeTab]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
@@ -149,6 +176,46 @@ function SettingsPage() {
     }
   };
 
+  const toggleUserModule = (userId, moduleKey) => {
+    if (moduleKey === APP_MODULES.DASHBOARD) return;
+    setAccessUsers((prev) =>
+      prev.map((user) => {
+        if (String(user._id) !== String(userId)) return user;
+        if (user.role === 'ADMIN') return user;
+
+        const modules = normalizeModuleAccess(user.moduleAccess);
+        let nextModules;
+        if (modules.includes(moduleKey)) {
+          nextModules = modules.filter((item) => item !== moduleKey);
+        } else {
+          nextModules = [...modules, moduleKey];
+        }
+        return { ...user, moduleAccess: normalizeModuleAccess(nextModules) };
+      })
+    );
+  };
+
+  const saveUserAccess = async (userId) => {
+    const targetUser = accessUsers.find((user) => String(user._id) === String(userId));
+    if (!targetUser) return;
+
+    setSavingAccessUserId(userId);
+    setAccessMessage('');
+    try {
+      await api.patch(`/users/${userId}`, {
+        moduleAccess: normalizeModuleAccess(targetUser.moduleAccess)
+      });
+      setAccessMessage(`Access updated for ${targetUser.name}`);
+      setTimeout(() => setAccessMessage(''), 2000);
+      setError('');
+      await loadAccessControl();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSavingAccessUserId('');
+    }
+  };
+
   return (
     <section className="page">
       <PageHeader
@@ -159,6 +226,7 @@ function SettingsPage() {
       {error ? <p className="error-text">{error}</p> : null}
       {configMessage ? <p className="success-text">{configMessage}</p> : null}
       {passwordMessage ? <p className="success-text">{passwordMessage}</p> : null}
+      {accessMessage ? <p className="success-text">{accessMessage}</p> : null}
 
       <article className="card">
         <div className="settings-tabs" role="tablist" aria-label="Settings tabs">
@@ -179,6 +247,15 @@ function SettingsPage() {
           >
             <LockKeyhole size={14} />
             Change Password
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'access' ? 'active' : ''}`}
+            role="tab"
+            aria-selected={activeTab === 'access'}
+            onClick={() => setActiveTab('access')}
+          >
+            <UserCog size={14} />
+            Access Control
           </button>
         </div>
 
@@ -351,6 +428,73 @@ function SettingsPage() {
               </button>
             </div>
           </form>
+        ) : null}
+
+        {activeTab === 'access' ? (
+          <div className="settings-panel">
+            {loadingAccess ? <p className="muted-text">Loading users...</p> : null}
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Module Access</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accessUsers.map((user) => (
+                    <tr key={user._id}>
+                      <td>
+                        <strong>{user.name}</strong>
+                        <div className="sub-cell">{user.email}</div>
+                      </td>
+                      <td>
+                        <span className="tag neutral">{user.role}</span>
+                      </td>
+                      <td>
+                        <div className="chip-grid">
+                          {USER_ASSIGNABLE_MODULES.map((moduleKey) => (
+                            <label key={`${user._id}-${moduleKey}`} className="checkbox-line">
+                              <input
+                                type="checkbox"
+                                checked={normalizeModuleAccess(user.moduleAccess).includes(moduleKey)}
+                                disabled={user.role === 'ADMIN' || moduleKey === APP_MODULES.DASHBOARD}
+                                onChange={() => toggleUserModule(user._id, moduleKey)}
+                              />
+                              {MODULE_LABELS[moduleKey]}
+                            </label>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        {user.role === 'ADMIN' ? (
+                          <span className="muted-text">All access</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-compact"
+                            onClick={() => saveUserAccess(user._id)}
+                            disabled={savingAccessUserId === user._id}
+                          >
+                            {savingAccessUserId === user._id ? 'Saving...' : 'Save'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {accessUsers.length === 0 && !loadingAccess ? (
+                    <tr>
+                      <td colSpan={4} className="empty-cell">
+                        No users found.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : null}
       </article>
     </section>

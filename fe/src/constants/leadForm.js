@@ -24,6 +24,10 @@ export const leadFormInitialValues = {
   projectType: '',
   availedSubsidyPreviously: '',
   projectSpecificAsk: '',
+  inquiryFor: 'SUBSIDY',
+  expectedServiceValue: '',
+  associatePartnerName: '',
+  customerProgressStatus: 'IN_PROCESS',
   industryType: '',
   source: 'MANUAL',
   requirementType: 'SUBSIDY',
@@ -38,8 +42,19 @@ export const leadSelectOptions = {
   projectType: ['MANUFACTURING', 'SERVICE', 'TRADING', 'AGRO', 'EXPANSION', 'MODERNIZATION', 'DIVERSIFICATION', 'OTHER'],
   availedSubsidyPreviously: ['YES', 'NO', 'NOT_SURE'],
   bankLoanIfAny: ['YES', 'NO', 'IN_DISCUSSION'],
-  source: ['MANUAL', 'WEBSITE', 'EXHIBITION', 'REFERRAL', 'WHATSAPP', 'COLD_CALL'],
-  requirementType: ['SUBSIDY', 'LAND', 'FUNDING', 'COMPLIANCE']
+  source: [
+    'MANUAL',
+    'WEBSITE',
+    'ONLINE_SOCIAL_MEDIA',
+    'REFERRAL',
+    'COLD_CALLING_WHATSAPP',
+    'REFERENCE_EXISTING_CLIENT',
+    'ASSOCIATES_B2B_PARTNERS',
+    'EXHIBITION_NETWORKING_EVENTS'
+  ],
+  inquiryFor: ['SUBSIDY', 'LICENSES_COMPLIANCE', 'INDUSTRIAL_LAND_INFRASTRUCTURE'],
+  requirementType: ['SUBSIDY', 'LICENSES_COMPLIANCE', 'INDUSTRIAL_LAND_INFRASTRUCTURE', 'LAND', 'FUNDING', 'COMPLIANCE'],
+  customerProgressStatus: ['IN_PROCESS', 'PENDING_FROM_CUSTOMER', 'WON', 'LOST']
 };
 
 const toNullable = (value) => {
@@ -63,6 +78,7 @@ export const mapLeadToForm = (lead) => ({
   investmentLand: lead?.investmentLand ?? '',
   investmentPlantMachinery: lead?.investmentPlantMachinery ?? '',
   totalInvestment: lead?.totalInvestment ?? '',
+  expectedServiceValue: lead?.expectedServiceValue ?? '',
   financeBankLoanPercent: lead?.financeBankLoanPercent ?? '',
   financeOwnContributionPercent: lead?.financeOwnContributionPercent ?? '',
   nextFollowUpAt: lead?.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toISOString().slice(0, 16) : ''
@@ -95,9 +111,13 @@ export const buildLeadPayload = (form, { includeStatus = false } = {}) => {
     projectType: toNullable(form.projectType),
     availedSubsidyPreviously: toNullable(form.availedSubsidyPreviously),
     projectSpecificAsk: toNullable(form.projectSpecificAsk),
+    inquiryFor: toNullable(form.inquiryFor) || 'SUBSIDY',
+    expectedServiceValue: toNullableNumber(form.expectedServiceValue),
+    associatePartnerName: toNullable(form.associatePartnerName),
+    customerProgressStatus: toNullable(form.customerProgressStatus) || 'IN_PROCESS',
     industryType: toNullable(form.industryType),
     source: toNullable(form.source) || 'MANUAL',
-    requirementType: toNullable(form.requirementType) || 'SUBSIDY',
+    requirementType: toNullable(form.requirementType) || toNullable(form.inquiryFor) || 'SUBSIDY',
     nextFollowUpAt: form.nextFollowUpAt || null
   };
 

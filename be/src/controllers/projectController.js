@@ -23,6 +23,71 @@ const STAGE_SEQUENCE = [
 
 const AUTO_LOCKED_STAGES = new Set([PROJECT_STAGE.ON_HOLD, PROJECT_STAGE.REJECTED, PROJECT_STAGE.COMPLETED]);
 
+const PROJECT_PROCESS_DATE_FIELDS = [
+  'callToActionSharedAt',
+  'inquiryFormForwardedAt',
+  'milestone1InfoWithPaymentAt',
+  'milestone1InfoWithoutPaymentAt',
+  'milestone1ConsultationScheduledAt',
+  'milestone2ConsultationCompletedAt',
+  'milestone2SubsidySummaryForwardedAt',
+  'milestone2BusinessProposalSharedAt',
+  'milestone2DiscussionInProgressAt',
+  'milestone3MandateSignedAt',
+  'milestone3ProformaInvoiceRaisedAt',
+  'milestone3AdvanceReceivedAt',
+  'milestone3FinalInvoiceDoneAt'
+];
+
+const PROJECT_PROCESS_NUMERIC_FIELDS = ['milestone3AdvanceReceivedAmount', 'approxProjectValue', 'approxServiceValue'];
+
+const toDateOrNull = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const toNumberOrNull = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const applyProcessTrackingPatch = (project, patch, actorId, now = new Date()) => {
+  if (!patch || typeof patch !== 'object') return [];
+
+  if (!project.processTracking) {
+    project.processTracking = {};
+  }
+
+  const changedFields = [];
+
+  PROJECT_PROCESS_DATE_FIELDS.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(patch, field)) {
+      const next = toDateOrNull(patch[field]);
+      project.processTracking[field] = next;
+      changedFields.push(field);
+    }
+  });
+
+  PROJECT_PROCESS_NUMERIC_FIELDS.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(patch, field)) {
+      const parsed = toNumberOrNull(patch[field]);
+      project.processTracking[field] = parsed === null ? 0 : Math.max(parsed, 0);
+      changedFields.push(field);
+    }
+  });
+
+  if (changedFields.length) {
+    project.processTracking.updatedAt = now;
+    project.processTracking.updatedBy = actorId;
+  }
+
+  return changedFields;
+};
+
 const applyGuidanceDefaults = (projectLike) => {
   (projectLike.milestones || []).forEach((milestone) => {
     if (!milestone.description) {
@@ -224,6 +289,7 @@ const getProjectById = async (req, res, next) => {
       .populate('category', 'name')
       .populate('scheme', 'name code')
       .populate('timeline.actor', 'name email')
+      .populate('processTracking.updatedBy', 'name email')
       .populate('stageHistory.changedBy', 'name email')
       .populate('milestones.tasks.assignee', 'name email')
       .populate('milestones.tasks.comments.author', 'name email')
@@ -271,7 +337,8 @@ const updateProject = async (req, res, next) => {
     const before = {
       currentStage: previousStage,
       targetCompletionDate: project.targetCompletionDate,
-      expectedSubsidyAmount: project.expectedSubsidyAmount
+      expectedSubsidyAmount: project.expectedSubsidyAmount,
+      processTracking: project.processTracking || null
     };
 
     const fields = [
@@ -292,6 +359,8 @@ const updateProject = async (req, res, next) => {
     });
 
     const now = new Date();
+    const changedProcessFields = applyProcessTrackingPatch(project, req.body.processTracking, req.user._id, now);
+
     if (previousStage !== project.currentStage) {
       project.stageHistory.push({
         from: previousStage,
@@ -309,6 +378,16 @@ const updateProject = async (req, res, next) => {
       actor: req.user._id,
       at: now
     });
+
+    if (changedProcessFields.length) {
+      project.timeline.push({
+        type: 'PROJECT_PROCESS_TRACKING_UPDATED',
+        message: `Project process tracking updated (${changedProcessFields.length} fields)`,
+        actor: req.user._id,
+        at: now,
+        meta: { changedFields: changedProcessFields }
+      });
+    }
 
     await project.save();
 
@@ -329,7 +408,8 @@ const updateProject = async (req, res, next) => {
       after: {
         currentStage: project.currentStage,
         targetCompletionDate: project.targetCompletionDate,
-        expectedSubsidyAmount: project.expectedSubsidyAmount
+        expectedSubsidyAmount: project.expectedSubsidyAmount,
+        processTracking: project.processTracking || null
       },
       req
     });

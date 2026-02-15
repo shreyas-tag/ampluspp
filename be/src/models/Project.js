@@ -100,6 +100,30 @@ const stageHistorySchema = new mongoose.Schema(
   { _id: true }
 );
 
+const processTrackingSchema = new mongoose.Schema(
+  {
+    callToActionSharedAt: { type: Date },
+    inquiryFormForwardedAt: { type: Date },
+    milestone1InfoWithPaymentAt: { type: Date },
+    milestone1InfoWithoutPaymentAt: { type: Date },
+    milestone1ConsultationScheduledAt: { type: Date },
+    milestone2ConsultationCompletedAt: { type: Date },
+    milestone2SubsidySummaryForwardedAt: { type: Date },
+    milestone2BusinessProposalSharedAt: { type: Date },
+    milestone2DiscussionInProgressAt: { type: Date },
+    milestone3MandateSignedAt: { type: Date },
+    milestone3ProformaInvoiceRaisedAt: { type: Date },
+    milestone3AdvanceReceivedAt: { type: Date },
+    milestone3AdvanceReceivedAmount: { type: Number, min: 0, default: 0 },
+    milestone3FinalInvoiceDoneAt: { type: Date },
+    approxProjectValue: { type: Number, min: 0, default: 0 },
+    approxServiceValue: { type: Number, min: 0, default: 0 },
+    updatedAt: { type: Date },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  },
+  { _id: false }
+);
+
 const projectSchema = new mongoose.Schema(
   {
     projectId: { type: String, unique: true, index: true },
@@ -127,6 +151,7 @@ const projectSchema = new mongoose.Schema(
       commentCount: { type: Number, default: 0 },
       attachmentCount: { type: Number, default: 0 }
     },
+    processTracking: processTrackingSchema,
     milestones: [milestoneSchema],
     timeline: [projectTimelineSchema],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }

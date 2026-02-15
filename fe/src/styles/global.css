@@ -1,6 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
+  :root {
+    --brand-primary: #31206f;
+    --brand-primary-dark: #24174f;
+    --brand-primary-soft: #efebfb;
+    --brand-primary-border: #cbc3e7;
+    --brand-accent: #b84a45;
+    --brand-accent-dark: #9b3d39;
+    --brand-accent-soft: #f8e8e7;
+    --brand-accent-border: #e8bab8;
+    --brand-gradient-start: #29166e;
+    --brand-gradient-mid: #3a2a73;
+    --brand-gradient-end: #a04b48;
+  }
+
   * {
     @apply box-border;
   }
@@ -52,7 +66,9 @@
   input:focus,
   select:focus,
   textarea:focus {
-    @apply border-[#1F4E79] ring-2 ring-[#1F4E79]/15;
+    border-color: var(--brand-primary);
+    @apply ring-2;
+    --tw-ring-color: color-mix(in srgb, var(--brand-primary) 20%, transparent);
   }
 
   details summary {
@@ -82,16 +98,12 @@
     gap: 1rem;
   }
 
-  .brand-wrap {
-    @apply rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-100 p-3;
+  .brand-logo {
+    @apply h-14 w-auto max-w-full object-contain;
   }
 
-  .brand-link {
-    @apply text-2xl font-bold text-[#1F4E79];
-  }
-
-  .brand-wrap p {
-    @apply mt-0.5 text-xs text-gray-500;
+  .brand-home {
+    @apply flex w-full items-center justify-center rounded-md px-2 py-2;
   }
 
   .sidebar-nav {
@@ -107,7 +119,10 @@
   }
 
   .sidebar-nav a.active {
-    @apply border-blue-200 bg-blue-50 text-[#1F4E79];
+    @apply border bg-white;
+    border-color: var(--brand-primary-border);
+    color: var(--brand-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 10%, transparent);
   }
 
   .sidebar-footer {
@@ -123,7 +138,7 @@
   }
 
   .sidebar-profile {
-    @apply rounded-xl border border-gray-200 bg-slate-50 p-3;
+    @apply flex items-center justify-between rounded-xl border border-gray-200 bg-slate-50 px-3 py-2.5;
   }
 
   .sidebar-profile-head {
@@ -139,7 +154,14 @@
   }
 
   .role-tag {
-    @apply mt-1 inline-flex rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700;
+    @apply inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold;
+    border-color: var(--brand-primary-border);
+    background: var(--brand-primary-soft);
+    color: var(--brand-primary);
+  }
+
+  .sidebar-user-name {
+    @apply text-sm font-semibold text-gray-800;
   }
 
   .crm-main {
@@ -298,11 +320,13 @@
   }
 
   .btn-primary {
-    @apply border-[#1F4E79] bg-[#1F4E79] text-white shadow;
+    @apply border text-white shadow;
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
   }
 
   .btn-primary:hover:not(:disabled) {
-    @apply bg-[#173a5b];
+    background: var(--brand-primary-dark);
   }
 
   .btn-secondary {
@@ -350,7 +374,8 @@
   }
 
   .inline-link {
-    @apply font-semibold text-[#1F4E79] hover:underline;
+    @apply font-semibold hover:underline;
+    color: var(--brand-primary);
   }
 
   .lead-cell {
@@ -358,7 +383,9 @@
   }
 
   .lead-avatar {
-    @apply inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-[#1F4E79];
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold;
+    background: var(--brand-primary-soft);
+    color: var(--brand-primary);
   }
 
   .sub-cell {
@@ -466,7 +493,9 @@
   }
 
   .lead-bucket-tab.active {
-    @apply border-[#1F4E79] bg-[#1F4E79] text-white;
+    @apply border text-white;
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
   }
 
   .kpi-grid {
@@ -487,7 +516,7 @@
   }
 
   .kpi-card.tone-blue {
-    border-left-color: #1F4E79;
+    border-left-color: var(--brand-primary);
   }
 
   .kpi-card.tone-teal {
@@ -551,7 +580,9 @@
   }
 
   .stage-tab.active {
-    @apply border-[#1F4E79] ring-2 ring-[#1F4E79]/20;
+    @apply border ring-2;
+    border-color: var(--brand-primary);
+    --tw-ring-color: color-mix(in srgb, var(--brand-primary) 22%, transparent);
   }
 
   .action-strip {
@@ -702,6 +733,22 @@
     @apply flex justify-end gap-2;
   }
 
+  .pagination-bar {
+    @apply mt-3 flex items-center justify-end gap-2;
+  }
+
+  .pagination-inline {
+    @apply flex items-center gap-2;
+  }
+
+  .pagination-status {
+    @apply inline-flex min-h-9 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs font-semibold text-gray-600;
+  }
+
+  .pagination-btn {
+    @apply min-h-9 min-w-10 px-3 text-sm font-bold;
+  }
+
   .inline-form {
     @apply mt-2 flex gap-2;
   }
@@ -736,6 +783,9 @@
 
   .modal-card {
     @apply w-full max-w-3xl rounded-xl border border-gray-200 bg-white shadow-2xl;
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
   }
 
   .modal-header {
@@ -748,6 +798,77 @@
 
   .modal-body {
     @apply p-4;
+    overflow-y: auto;
+    max-height: calc(100vh - 9rem);
+  }
+
+  .stepper-head {
+    @apply mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3;
+  }
+
+  .stepper-track {
+    @apply relative grid w-full grid-cols-3 gap-2;
+  }
+
+  .stepper-line {
+    @apply absolute left-[9%] right-[9%] top-3.5 h-0.5 bg-slate-300;
+  }
+
+  .stepper-dot {
+    @apply inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-500;
+    @apply transition-all duration-200;
+  }
+
+  .stepper-dot.active {
+    @apply border text-white shadow;
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
+  }
+
+  .stepper-dot.done {
+    @apply border-emerald-600 bg-emerald-600 text-white;
+  }
+
+  .stepper-step {
+    @apply relative z-[1] flex w-full flex-col items-center gap-1 border-0 bg-transparent p-0 text-center;
+  }
+
+  .stepper-step:hover {
+    transform: none;
+  }
+
+  .stepper-step-label {
+    @apply text-[11px] font-medium text-slate-500;
+  }
+
+  .stepper-step-label.active {
+    color: var(--brand-primary);
+  }
+
+  .pdf-viewer-shell {
+    @apply flex h-[78vh] min-h-[78vh] flex-col;
+  }
+
+  .pdf-toolbar {
+    @apply flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-slate-50 px-3 py-2;
+  }
+
+  .pdf-toolbar-group {
+    @apply flex items-center gap-2;
+  }
+
+  .pdf-stage {
+    @apply min-h-0 flex-1 overflow-auto bg-slate-200 p-0;
+  }
+
+  .pdf-frame-wrap {
+    @apply h-full w-full overflow-auto bg-white;
+  }
+
+  .pdf-frame {
+    @apply block h-[calc(78vh-122px)] w-full border-0 bg-white;
+    transform-origin: top left;
+    transition: transform 0.15s ease;
   }
 
   .settings-tabs {
@@ -759,7 +880,8 @@
   }
 
   .settings-tab.active {
-    @apply border-gray-200 bg-white text-[#1F4E79];
+    @apply border-gray-200 bg-white;
+    color: var(--brand-primary);
   }
 
   .settings-panel {
@@ -820,7 +942,7 @@
   }
 
   .switch.on {
-    @apply bg-[#1F4E79];
+    background: var(--brand-primary);
   }
 
   .switch span {
@@ -840,7 +962,8 @@
   }
 
   .login-shell {
-    @apply min-h-screen bg-gradient-to-br from-[#1F4E79] via-[#275f93] to-[#10B981] p-5;
+    @apply min-h-screen p-5;
+    background: linear-gradient(135deg, var(--brand-gradient-start), var(--brand-gradient-mid) 55%, var(--brand-gradient-end));
     @apply grid place-items-center;
   }
 
@@ -859,7 +982,8 @@
   }
 
   .login-visual-placeholder {
-    @apply flex h-full flex-col justify-center gap-2 bg-gradient-to-br from-slate-900 via-[#1F4E79] to-teal-700 p-10 text-slate-100;
+    @apply flex h-full flex-col justify-center gap-2 p-10 text-slate-100;
+    background: linear-gradient(145deg, #1b1536, var(--brand-primary), var(--brand-accent-dark));
   }
 
   .login-visual-placeholder h2 {
@@ -883,7 +1007,8 @@
   }
 
   .login-brand h1 {
-    @apply mb-0 mt-2 text-2xl font-bold text-[#1F4E79];
+    @apply mb-0 mt-2 text-2xl font-bold;
+    color: var(--brand-primary);
   }
 
   .login-brand p {

@@ -18,5 +18,6 @@ const makeId = async (sequenceName, prefix) => {
 const generateLeadId = () => makeId('lead_id', 'LEAD-');
 const generateClientCode = () => makeId('client_code', 'CL-');
 const generateProjectId = () => makeId('project_id', 'PRJ-');
+const generateInvoiceId = () => makeId('invoice_id', 'INV-');
 
-module.exports = { generateLeadId, generateClientCode, generateProjectId };
+module.exports = { generateLeadId, generateClientCode, generateProjectId, generateInvoiceId };

@@ -11,6 +11,7 @@ Authentication & Access Control,Authentication,Ability to log in with secure cre
 ,,Ability to log out securely and invalidate local auth context,,3,2,1
 ,Password Security,Ability to change password using current-password verification,,6,6,3
 ,Role Access,Ability to restrict admin-only actions by role middleware,,3,6,2
+,Reporting Access,Ability to restrict reporting summary endpoints to admin-only visibility,,,,
 ,Task Authorization,Ability to allow task updates only for assignee or admin,,4,8,4
 ,Project Visibility,Ability to limit non-admin project visibility to assigned work,,4,8,3
 User Administration,User Listing,"Ability to view user table with role, status, and search filters",,8,4,2
@@ -21,6 +22,8 @@ User Administration,User Listing,"Ability to view user table with role, status, 
 ,Assignment Support,Ability to provide assignable active users for task assignment,,2,4,3
 ,Audit Trail,Ability to capture user management actions in system activity logs,,2,5,4
 Lead Management,Lead Intake,Ability to create leads manually with core company and contact fields,,8,6,4
+,Lead Intake Wizard,Ability to create leads using 4-step guided flow (Basic Details -> Location & Profile -> Financial Scope -> Operations),,,,
+,Step Validation,Ability to validate mandatory fields before moving to next lead-create step,,,,
 ,,Ability to receive submitted WordPress contact forms via secured webhook,,2,6,6
 ,Lead Listing,"Ability to list leads with search, source, and status filters",,10,8,4
 ,Lead Buckets,Ability to show HOT/WARM/COLD/CONVERTED tabs with quick filtering,,8,6,4
@@ -64,6 +67,13 @@ Task Collaboration & Documents,Task Detail View,Ability to open task in detailed
 ,Document Access,Ability to download attachments through authorized secure route,,4,5,6
 ,Permission Guard,Ability to enforce assignee/admin permission on comments and uploads,,2,6,5
 ,Timeline Integration,Ability to write collaboration events into project timeline stream,,2,5,5
+Invoice Management & PDF Experience,Invoice Details Workspace,Ability to open invoices on dedicated detail page instead of popup,,,,
+,Navigation Context,Ability to return users to source page using back navigation context (list <-> details <-> PDF),,,,
+,PDF Viewer Page,Ability to open invoice PDF in dedicated in-app page from list and details,,,,
+,PDF Controls,Ability to zoom/rotate/reset/download invoice PDF from viewer toolbar,,,,
+,PDF Layout Integrity,Ability to keep line-item table within page margins with wrapped descriptions,,,,
+,PDF Table Structure,"Ability to render line-item columns as Description, Unit Price, Qty, Amount",,,,
+,Modal Validation UX,Ability to keep create-invoice validation messages inside modal context,,,,
 Automation & Workflow Engine,Status Sync,Ability to recalculate milestone status using child task statuses,,1,7,6
 ,Stage Progression,Ability to auto-advance project stage after stage completion,,1,7,6
 ,Project Completion,Ability to auto-close project when all milestones are completed,,1,6,5
@@ -79,6 +89,8 @@ Notifications & Live Activity,Realtime Infrastructure,Ability to initialize and 
 ,Notification Inbox,Ability to list notifications and mark as read by recipient,,6,5,5
 Dashboard & Reporting,KPI Dashboard,"Ability to show lead, client, project, and pending task counters",,8,6,4
 ,,Ability to show lead conversion rate and average first response time,,6,6,5
+,Role-Based Dashboards,Ability to show admin analytics dashboard and user-specific work dashboard separately,,,,
+,User Workboard,Ability to present assigned actionable tasks for users without admin-only analytics widgets,,,,
 ,Execution Insights,Ability to show stage distribution and completion progress,,6,5,4
 ,Pending Work,Ability to display pending task queue with assignee and deadline,,6,5,4
 ,Report Metrics,Ability to capture communication statistics for management reporting,,2,6,6
@@ -91,11 +103,14 @@ Settings & Catalog Configuration,Admin Settings,Ability to manage live activity 
 ,Access Security,Ability to restrict settings and catalog controls to admin role,,1,4,4
 UI UX System & Frontend Quality,Layout System,"Ability to implement consistent sidebar, topbar, and dashboard shell",,12,4,2
 ,Modal UX,Ability to keep create/edit actions in modals with confirmations,,10,4,2
+,Modal Error UX,Ability to show validation and API errors within active modal surface,,,,
 ,Table UX,Ability to align search/filter controls above tables for maximum data space,,10,4,2
+,Pagination UX,Ability to standardize table pagination controls using << and >> with aligned page status,,,,
 ,Badge System,Ability to apply status-based color capsules across tables and task lists,,8,4,2
 ,Date UX,"Ability to display smart datetime rules (Today, Yesterday, weekday, full date)",,8,4,2
 ,Sidebar Behavior,Ability to keep sidebar fixed with user details/signout pinned at bottom,,8,3,1
 ,Timeline UX,Ability to paginate timeline records and maintain responsive scroll behavior,,8,4,2
+,Brand Alignment,Ability to align login/sidebar branding visuals with provided logo asset and color tone,,,,
 "QA, Security Hardening & Release Readiness",API Validation,Ability to validate request payloads on all write endpoints,,6,8,8
 ,Security Controls,Ability to enforce webhook key and auth guard reliability checks,,5,6,6
 ,Workflow Testing,Ability to test lead-to-client-to-project lifecycle end-to-end,,6,8,8

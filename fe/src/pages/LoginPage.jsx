@@ -3,6 +3,7 @@ import { ArrowRight, Building2, LockKeyhole, Mail } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiErrorMessage } from '../api/client';
+import loginLogo from '../assets/login_logo.png';
 
 function LoginPage() {
   const { isAuthenticated, login } = useAuth();
@@ -38,8 +39,7 @@ function LoginPage() {
             <img src={import.meta.env.VITE_LOGIN_IMAGE_URL} alt="Amplus visual" />
           ) : (
             <div className="login-visual-placeholder">
-              <Building2 size={34} />
-              <h2>Amplus Operations</h2>
+              <img src={loginLogo} alt="Amplus logo" className="h-14 w-auto max-w-full object-contain" />
               <p>Secure CRM workspace for subsidy delivery lifecycle.</p>
             </div>
           )}
@@ -51,7 +51,9 @@ function LoginPage() {
               <Building2 size={14} />
               Amplus Subsidy Solutions
             </div>
-            <h1>Amplus CRM</h1>
+            <h1>
+              <img src={loginLogo} alt="Amplus logo" className="h-12 w-auto max-w-full object-contain" />
+            </h1>
             <p>Enterprise Lead and Client Lifecycle Platform</p>
           </div>
 

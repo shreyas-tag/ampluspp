@@ -12,6 +12,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const metaRoutes = require('./routes/metaRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/meta', metaRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

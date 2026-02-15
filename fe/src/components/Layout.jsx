@@ -10,6 +10,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Power,
+  ReceiptText,
   Settings2,
   Sparkles,
   UserCog,
@@ -20,12 +21,14 @@ import { useAuth } from '../context/AuthContext';
 import { useSocketEvents } from '../context/SocketContext';
 import api from '../api/client';
 import { formatSmartDateTime } from '../utils/dateFormat';
+import { APP_MODULES } from '../constants/modules';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/leads', label: 'Leads', icon: UsersRound },
-  { to: '/clients', label: 'Clients', icon: CircleUserRound },
-  { to: '/projects', label: 'Projects', icon: ListChecks },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, module: APP_MODULES.DASHBOARD },
+  { to: '/leads', label: 'Leads', icon: UsersRound, module: APP_MODULES.LEADS },
+  { to: '/clients', label: 'Clients', icon: CircleUserRound, module: APP_MODULES.CLIENTS },
+  { to: '/projects', label: 'Projects', icon: ListChecks, module: APP_MODULES.PROJECTS },
+  { to: '/invoices', label: 'Invoices', icon: ReceiptText, module: APP_MODULES.INVOICES },
   { to: '/users', label: 'Users', icon: UserCog, adminOnly: true },
   { to: '/settings', label: 'Settings', icon: Settings2, adminOnly: true }
 ];
@@ -35,12 +38,13 @@ const titleMap = {
   '/leads': 'Leads',
   '/clients': 'Clients',
   '/projects': 'Projects',
+  '/invoices': 'Invoices',
   '/users': 'Users',
   '/settings': 'Settings'
 };
 
 function Layout() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, hasModuleAccess, refreshUser } = useAuth();
   const { events, lastEvent, requestBrowserNotificationPermission } = useSocketEvents();
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,6 +95,12 @@ function Layout() {
     loadMySettings();
   }, [lastEvent?.id, lastEvent?.type, loadMySettings]);
 
+  useEffect(() => {
+    if (lastEvent?.type !== 'USER_UPDATED') return;
+    if (String(lastEvent?.payload?.userId || '') !== String(user?._id || '')) return;
+    refreshUser().catch(() => {});
+  }, [lastEvent?.id, lastEvent?.type, lastEvent?.payload?.userId, user?._id, refreshUser]);
+
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
@@ -99,16 +109,17 @@ function Layout() {
   return (
     <div className={`crm-shell ${activityCollapsed || !canViewLiveActivity ? 'activity-collapsed' : ''}`}>
       <aside className={`crm-sidebar ${mobileOpen ? 'open' : ''}`}>
-        <div className="brand-wrap">
-          <Link to="/" className="brand-link">
-            Amplus CRM
-          </Link>
-          <p>Operations Console</p>
-        </div>
+        <Link to="/" className="brand-home">
+          <img src="https://www.subsidysolutions.in/assets/img/logo/amplus-logo-img.jpg" alt="Logo" className="brand-logo" />
+        </Link>
 
         <nav className="sidebar-nav">
           {navItems
-            .filter((item) => (item.adminOnly ? isAdmin : true))
+            .filter((item) => {
+              if (item.adminOnly) return isAdmin;
+              if (isAdmin) return true;
+              return item.module ? hasModuleAccess(item.module) : true;
+            })
             .map((item) => {
               const Icon = item.icon;
               return (
@@ -122,14 +133,8 @@ function Layout() {
 
         <div className="sidebar-footer">
           <div className="sidebar-profile">
-            <div className="sidebar-profile-head">
-              <CircleUserRound size={18} />
-              <div>
-                <strong>{user?.name}</strong>
-                <small>{user?.email}</small>
-              </div>
-            </div>
-            <span className="role-tag">{user?.role}</span>
+            <strong className="sidebar-user-name">{user?.name || 'User'}</strong>
+            <span className="role-tag">{user?.role || 'USER'}</span>
           </div>
           <button className="btn btn-ghost sidebar-logout" onClick={handleLogout}>
             <Power size={14} />

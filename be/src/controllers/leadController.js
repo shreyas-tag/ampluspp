@@ -20,8 +20,13 @@ const NUMERIC_LEAD_FIELDS = new Set([
   'investmentLand',
   'investmentPlantMachinery',
   'totalInvestment',
+  'expectedServiceValue',
   'financeBankLoanPercent',
   'financeOwnContributionPercent'
+]);
+
+const DATE_LEAD_FIELDS = new Set([
+  'nextFollowUpAt'
 ]);
 
 const EDITABLE_LEAD_FIELDS = [
@@ -50,6 +55,10 @@ const EDITABLE_LEAD_FIELDS = [
   'financeOwnContributionPercent',
   'projectType',
   'requirementType',
+  'inquiryFor',
+  'expectedServiceValue',
+  'associatePartnerName',
+  'customerProgressStatus',
   'availedSubsidyPreviously',
   'projectSpecificAsk',
   'source',
@@ -59,6 +68,40 @@ const EDITABLE_LEAD_FIELDS = [
 ];
 
 const normalizeKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const INQUIRY_FOR_MAP = {
+  subsidy: 'SUBSIDY',
+  licensescompliance: 'LICENSES_COMPLIANCE',
+  licensesandcompliance: 'LICENSES_COMPLIANCE',
+  industriallandinfrastructure: 'INDUSTRIAL_LAND_INFRASTRUCTURE',
+  industriallandandinfrastructure: 'INDUSTRIAL_LAND_INFRASTRUCTURE',
+  land: 'LAND',
+  funding: 'FUNDING',
+  compliance: 'COMPLIANCE'
+};
+
+const SOURCE_MAP = {
+  manual: 'MANUAL',
+  website: 'WEBSITE',
+  onlinesocialmedia: 'ONLINE_SOCIAL_MEDIA',
+  socialmedia: 'ONLINE_SOCIAL_MEDIA',
+  referral: 'REFERRAL',
+  coldcallingwhatsapp: 'COLD_CALLING_WHATSAPP',
+  coldcallwhatsapp: 'COLD_CALLING_WHATSAPP',
+  referencefromexistingclient: 'REFERENCE_EXISTING_CLIENT',
+  associatesb2bpartners: 'ASSOCIATES_B2B_PARTNERS',
+  exhibitionnetworkingevents: 'EXHIBITION_NETWORKING_EVENTS',
+  exhibition: 'EXHIBITION',
+  whatsapp: 'WHATSAPP',
+  coldcall: 'COLD_CALL'
+};
+
+const CUSTOMER_PROGRESS_STATUS_MAP = {
+  inprocess: 'IN_PROCESS',
+  pendingfromcustomer: 'PENDING_FROM_CUSTOMER',
+  won: 'WON',
+  lost: 'LOST'
+};
 
 const normalizeString = (value) => {
   if (value === undefined) return undefined;
@@ -75,9 +118,33 @@ const normalizeNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const normalizeInquiryFor = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const key = normalizeKey(value);
+  return INQUIRY_FOR_MAP[key] || 'SUBSIDY';
+};
+
+const normalizeSource = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return 'MANUAL';
+  const key = normalizeKey(value);
+  return SOURCE_MAP[key] || 'MANUAL';
+};
+
+const normalizeCustomerProgressStatus = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const key = normalizeKey(value);
+  return CUSTOMER_PROGRESS_STATUS_MAP[key] || 'IN_PROCESS';
+};
+
 const normalizeLeadField = (field, value) => {
   if (NUMERIC_LEAD_FIELDS.has(field)) return normalizeNumber(value);
-  if (field === 'nextFollowUpAt') return value || null;
+  if (DATE_LEAD_FIELDS.has(field)) return value || null;
+  if (field === 'inquiryFor' || field === 'requirementType') return normalizeInquiryFor(value);
+  if (field === 'source') return normalizeSource(value);
+  if (field === 'customerProgressStatus') return normalizeCustomerProgressStatus(value);
   return normalizeString(value);
 };
 
@@ -88,6 +155,8 @@ const extractLeadAttributes = (payload) => {
       attrs[field] = normalizeLeadField(field, payload[field]);
     }
   });
+  if (attrs.inquiryFor && attrs.requirementType === undefined) attrs.requirementType = attrs.inquiryFor;
+  if (attrs.requirementType && attrs.inquiryFor === undefined) attrs.inquiryFor = attrs.requirementType;
   return attrs;
 };
 
@@ -127,6 +196,31 @@ const computeFirstResponse = (lead, actorId, now, nextStatus) => {
       at: now
     });
   }
+};
+
+const buildProjectProcessTrackingFromLead = (lead, actorId, now = new Date()) => {
+  const processTracking = {
+    callToActionSharedAt: lead.callToActionDetailsSharedAt || null,
+    inquiryFormForwardedAt: lead.inquiryFormForwardedAt || null,
+    milestone1InfoWithPaymentAt: lead.milestone1InfoWithPaymentAt || null,
+    milestone1InfoWithoutPaymentAt: lead.milestone1InfoWithoutPaymentAt || null,
+    milestone1ConsultationScheduledAt: lead.milestone1ConsultationScheduledAt || null,
+    milestone2ConsultationCompletedAt: lead.milestone2ConsultationCompletedAt || null,
+    milestone2SubsidySummaryForwardedAt: lead.milestone2SubsidySummaryForwardedAt || null,
+    milestone2BusinessProposalSharedAt: lead.milestone2BusinessProposalSharedAt || null,
+    milestone2DiscussionInProgressAt: lead.milestone2DiscussionInProgressAt || null,
+    milestone3MandateSignedAt: lead.milestone3MandateSignedAt || null,
+    milestone3ProformaInvoiceRaisedAt: lead.milestone3ProformaInvoiceRaisedAt || null,
+    milestone3AdvanceReceivedAt: lead.milestone3AdvanceReceivedAt || null,
+    milestone3AdvanceReceivedAmount: lead.milestone3AdvanceReceivedAmount || 0,
+    milestone3FinalInvoiceDoneAt: lead.milestone3FinalInvoiceDoneAt || null,
+    approxProjectValue: lead.approxProjectValue || 0,
+    approxServiceValue: lead.approxServiceValue || 0,
+    updatedAt: now,
+    updatedBy: actorId
+  };
+
+  return processTracking;
 };
 
 const buildLeadFilter = (query) => {
@@ -218,6 +312,7 @@ const getLeadById = async (req, res, next) => {
       .populate('statusHistory.changedBy', 'name email')
       .populate('notes.createdBy', 'name email')
       .populate('calls.createdBy', 'name email')
+      .populate('followUpReports.createdBy', 'name email')
       .populate('convertedClient')
       .lean();
 
@@ -347,6 +442,7 @@ const createLeadFromWebsite = async (req, res, next) => {
     const district = pickFromPayload(req.body, lookup, ['district']);
     const state = pickFromPayload(req.body, lookup, ['state']);
     const inboundMessage = pickFromPayload(req.body, lookup, ['message', 'projectSpecificAsk', 'specificAsk', 'highlight']);
+    const source = pickFromPayload(req.body, lookup, ['source', 'sourceOfLead']) || 'WEBSITE';
 
     if (!companyName || !contactPerson || !mobileNumber) {
       const err = new Error('companyName, contactPerson and mobileNumber are required');
@@ -400,6 +496,10 @@ const createLeadFromWebsite = async (req, res, next) => {
           'ownContributionMargin',
           'ownContribution'
         ]),
+        inquiryFor: pickFromPayload(req.body, lookup, ['inquiryFor', 'inquiryForType']),
+        expectedServiceValue: pickFromPayload(req.body, lookup, ['expectedServiceValue', 'expectedFeesServiceValue']),
+        associatePartnerName: pickFromPayload(req.body, lookup, ['associatePartnerName']),
+        customerProgressStatus: pickFromPayload(req.body, lookup, ['customerProgressStatus']),
         projectType: pickFromPayload(req.body, lookup, ['projectType', 'typeOfProject']),
         availedSubsidyPreviously: pickFromPayload(req.body, lookup, [
           'availedSubsidyPreviously',
@@ -407,7 +507,7 @@ const createLeadFromWebsite = async (req, res, next) => {
         ]),
         projectSpecificAsk: pickFromPayload(req.body, lookup, ['projectSpecificAsk', 'specificAsk', 'highlight', 'message']) || inboundMessage
       }),
-      source: 'WEBSITE',
+      source,
       createdBy: actorId,
       enquiryReceivedAt: new Date(),
       lastStatusChangedAt: new Date(),
@@ -660,6 +760,65 @@ const addLeadCall = async (req, res, next) => {
   }
 };
 
+const addLeadFollowUpReport = async (req, res, next) => {
+  try {
+    const { reportNo, remark } = req.body;
+    const parsedReportNo = Number(reportNo);
+    if (![1, 2, 3].includes(parsedReportNo) || !String(remark || '').trim()) {
+      const err = new Error('reportNo (1-3) and remark are required');
+      err.statusCode = StatusCodes.BAD_REQUEST;
+      throw err;
+    }
+
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      const err = new Error('Lead not found');
+      err.statusCode = StatusCodes.NOT_FOUND;
+      throw err;
+    }
+
+    const now = new Date();
+    lead.followUpReports.push({
+      reportNo: parsedReportNo,
+      remark: String(remark).trim(),
+      createdBy: req.user._id,
+      createdAt: now
+    });
+    lead.lastInteractionAt = now;
+    lead.updateCount = (lead.updateCount || 0) + 1;
+    computeFirstResponse(lead, req.user._id, now, lead.status);
+    lead.timeline.push({
+      type: 'FOLLOW_UP_REPORT_ADDED',
+      message: `Follow-up report ${parsedReportNo} added`,
+      actor: req.user._id,
+      at: now
+    });
+
+    await lead.save();
+
+    await broadcastEvent({
+      type: 'LEAD_FOLLOW_UP',
+      title: 'Follow-up report logged',
+      message: `${lead.companyName} follow-up report ${parsedReportNo} added`,
+      payload: { leadId: lead._id, reportNo: parsedReportNo },
+      actorId: req.user._id
+    });
+
+    await logAudit({
+      action: 'LEAD_FOLLOW_UP_ADDED',
+      entityType: 'LEAD',
+      entityId: lead._id,
+      actor: req.user._id,
+      metadata: { reportNo: parsedReportNo, remarkLength: String(remark).trim().length },
+      req
+    });
+
+    res.status(StatusCodes.CREATED).json({ lead });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const convertLeadToClient = async (req, res, next) => {
   try {
     const lead = await Lead.findById(req.params.id);
@@ -715,6 +874,7 @@ const convertLeadToClient = async (req, res, next) => {
       applicationNo: req.body.applicationNo,
       projectValue: req.body.projectValue || 0,
       expectedSubsidyAmount: req.body.expectedSubsidyAmount || 0,
+      processTracking: buildProjectProcessTrackingFromLead(lead, req.user._id, new Date()),
       startDate: req.body.startDate || new Date(),
       targetCompletionDate: req.body.targetCompletionDate,
       currentStage: PROJECT_STAGE.DOCUMENTATION,
@@ -755,6 +915,7 @@ const convertLeadToClient = async (req, res, next) => {
     lead.convertedAt = now;
     lead.convertedClient = client._id;
     lead.status = LEAD_STATUS.CONVERTED;
+    lead.customerProgressStatus = 'WON';
     lead.lastInteractionAt = now;
     lead.lastStatusChangedAt = now;
     lead.updateCount = (lead.updateCount || 0) + 1;
@@ -813,5 +974,6 @@ module.exports = {
   updateLead,
   addLeadNote,
   addLeadCall,
+  addLeadFollowUpReport,
   convertLeadToClient
 };

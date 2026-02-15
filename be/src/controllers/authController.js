@@ -3,6 +3,7 @@ const { StatusCodes } = require('http-status-codes');
 const env = require('../config/env');
 const User = require('../models/User');
 const { logAudit } = require('../utils/auditLog');
+const { normalizeModuleAccess } = require('../constants/modules');
 
 const signToken = (user) =>
   jwt.sign({ sub: user._id, role: user.role }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
@@ -37,7 +38,8 @@ const login = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        moduleAccess: normalizeModuleAccess(user.moduleAccess)
       }
     });
   } catch (err) {
