@@ -982,7 +982,7 @@
   }
 
   .login-visual-placeholder {
-    @apply flex h-full flex-col justify-center gap-2 p-10 text-slate-100;
+    @apply h-full ;
     background: linear-gradient(145deg, #1b1536, var(--brand-primary), var(--brand-accent-dark));
   }
 
@@ -995,7 +995,7 @@
   }
 
   .login-panel {
-    @apply bg-white p-6;
+    @apply bg-white p-6 flex;
   }
 
   .login-brand {
@@ -1016,7 +1016,7 @@
   }
 
   .login-form {
-    @apply flex flex-col gap-2.5;
+    @apply flex flex-col gap-2.5 w-full justify-center;
   }
 
   .input-icon-wrap {

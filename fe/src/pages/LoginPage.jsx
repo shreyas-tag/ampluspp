@@ -39,24 +39,13 @@ function LoginPage() {
             <img src={import.meta.env.VITE_LOGIN_IMAGE_URL} alt="Amplus visual" />
           ) : (
             <div className="login-visual-placeholder">
-              <img src={loginLogo} alt="Amplus logo" className="h-14 w-auto max-w-full object-contain" />
-              <p>Secure CRM workspace for subsidy delivery lifecycle.</p>
+              <img src={loginLogo} alt="Amplus logo" className="h-full" />
+             
             </div>
           )}
         </aside>
 
         <div className="login-panel">
-          <div className="login-brand">
-            <div className="brand-pill">
-              <Building2 size={14} />
-              Amplus Subsidy Solutions
-            </div>
-            <h1>
-              <img src={loginLogo} alt="Amplus logo" className="h-12 w-auto max-w-full object-contain" />
-            </h1>
-            <p>Enterprise Lead and Client Lifecycle Platform</p>
-          </div>
-
           <form className="login-form" onSubmit={handleSubmit}>
             <label>
               Email
